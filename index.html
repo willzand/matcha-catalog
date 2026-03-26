@@ -41,23 +41,42 @@
         // *** วางลิงก์ WEB_APP_URL ของคุณตรงนี้เหมือนเดิมนะครับ ***
         const API_URL = 'https://script.google.com/macros/s/AKfycbyqTpO3AAjoWrNd3V1Frgy8Z5MbKtQC_gD2aWeytPAhfAdPMwbOMtYn8qd7B7HM50ZR/exec';
 
-        let allMatchaData = [];
+       let allMatchaData = [];
 
         async function fetchMatchaData() {
             try {
-                const response = await fetch(API_URL);
-                allMatchaData = await response.json();
+                // 1. ลองเช็คดูก่อนว่าเบราว์เซอร์เคยจำข้อมูลไว้ไหม (ใช้ Session Storage)
+                const cachedData = sessionStorage.getItem('matchaDataCache');
                 
-                setupFilter(allMatchaData);
-                displayData(allMatchaData);
+                if (cachedData) {
+                    // ถ้ามีข้อมูลที่จำไว้ ให้ดึงมาโชว์เลยทันที (เร็วมาก)
+                    allMatchaData = JSON.parse(cachedData);
+                    setupFilter(allMatchaData);
+                    displayData(allMatchaData);
+                    console.log("โหลดข้อมูลจาก Cache");
+                } else {
+                    // ถ้าไม่มี ค่อยวิ่งไปดึงจาก Google Sheet (ใช้เวลาหน่อย)
+                    const response = await fetch(API_URL);
+                    allMatchaData = await response.json();
+                    
+                    // ดึงเสร็จแล้ว สั่งให้เบราว์เซอร์จำไว้ใช้รอบหน้า
+                    sessionStorage.setItem('matchaDataCache', JSON.stringify(allMatchaData));
+                    
+                    setupFilter(allMatchaData);
+                    displayData(allMatchaData);
+                    console.log("โหลดข้อมูลจาก API ใหม่");
+                }
+
             } catch (error) {
                 console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
-                document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%;">ไม่สามารถโหลดข้อมูลได้ โปรดตรวจสอบสิทธิ์การแชร์หรือ URL</p>';
+                document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%;">ไม่สามารถโหลดข้อมูลได้ โปรดตรวจสอบอินเทอร์เน็ตหรือ URL</p>';
             }
         }
 
         function setupFilter(data) {
             const filterSelect = document.getElementById('brandFilter');
+            filterSelect.innerHTML = '<option value="All">🍵 ทั้งหมด (All)</option>'; // รีเซ็ตตัวเลือกก่อน
+            
             const uniqueBrands = [...new Set(data.map(item => item['Brand']).filter(brand => brand))];
             
             uniqueBrands.forEach(brand => {
@@ -67,7 +86,11 @@
                 filterSelect.appendChild(option);
             });
 
-            filterSelect.addEventListener('change', function(e) {
+            // ลบ Event Listener เก่าออกก่อนป้องกันการทำงานซ้ำซ้อน
+            const newFilterSelect = filterSelect.cloneNode(true);
+            filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
+
+            newFilterSelect.addEventListener('change', function(e) {
                 const selectedBrand = e.target.value;
                 if (selectedBrand === 'All') {
                     displayData(allMatchaData);
@@ -83,13 +106,14 @@
             let html = '';
 
             if (matchaList.length === 0) {
-                container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะสำหรับร้านนี้</p>';
+                container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะ</p>';
                 return;
             }
 
             matchaList.forEach(item => {
                 if(!item['Product Name']) return;
 
+                // *** เปลี่ยนขนาดรูปเป็น w400 ตรงนี้ครับ ***
                 const imageUrl = item['Image ID'] 
                     ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` 
                     : 'https://via.placeholder.com/300x200?text=No+Image';
@@ -98,7 +122,6 @@
                     ? `<div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2']}</div>` 
                     : '';
 
-                // --- ส่วนที่ปรับปรุง: แปลงตัวเลขราคาให้มีลูกน้ำ (Comma) ---
                 const priceFormatted = item['Price_JPY'] 
                     ? Number(item['Price_JPY']).toLocaleString() 
                     : '-';
@@ -116,7 +139,6 @@
                 `;
             });
 
-            
             container.innerHTML = html;
         }
 
