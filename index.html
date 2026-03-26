@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matcha Catalog</title>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f4f6f5; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; background-color: #e0e0e0; }
+        .card h3 { color: #2e5c23; margin: 12px 0 5px; font-size: 1.2em; }
+        .card p { margin: 5px 0; color: #555; font-size: 0.9em; }
+        .price { font-weight: bold; color: #b71c1c; font-size: 1.1em !important; }
+        .tag { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px;}
+        
+        .taste-box { background-color: #fff8e1; border-left: 4px solid #ffb300; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.85em; color: #555; }
+        
+        .filter-section { text-align: center; margin-bottom: 30px; }
+        #brandFilter { padding: 10px 15px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; font-family: 'Kanit', sans-serif; outline: none; cursor: pointer; background-color: white;}
+        #brandFilter:hover { border-color: #2e5c23; }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center; color: #2e5c23;">🍵 คลังข้อมูลมัทฉะ (Matcha Catalog)</h1>
+    
+    <div class="filter-section">
+        <label for="brandFilter" style="font-weight: bold; color: #2e5c23; font-size: 1.1em; margin-right: 10px;">🏠 เลือกร้าน/แบรนด์:</label>
+        <select id="brandFilter">
+            <option value="All">🍵 ทั้งหมด (All)</option>
+        </select>
+    </div>
+
+    <div class="grid" id="matcha-container">
+        <p style="text-align:center; width:100%;">กำลังโหลดข้อมูล...</p>
+    </div>
+
+    <script>
+        // *** วางลิงก์ WEB_APP_URL ของคุณตรงนี้เหมือนเดิมนะครับ ***
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyqTpO3AAjoWrNd3V1Frgy8Z5MbKtQC_gD2aWeytPAhfAdPMwbOMtYn8qd7B7HM50ZR/exec';
+
+        let allMatchaData = [];
+
+        async function fetchMatchaData() {
+            try {
+                const response = await fetch(API_URL);
+                allMatchaData = await response.json();
+                
+                setupFilter(allMatchaData);
+                displayData(allMatchaData);
+            } catch (error) {
+                console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
+                document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%;">ไม่สามารถโหลดข้อมูลได้ โปรดตรวจสอบสิทธิ์การแชร์หรือ URL</p>';
+            }
+        }
+
+        function setupFilter(data) {
+            const filterSelect = document.getElementById('brandFilter');
+            const uniqueBrands = [...new Set(data.map(item => item['Brand']).filter(brand => brand))];
+            
+            uniqueBrands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                filterSelect.appendChild(option);
+            });
+
+            filterSelect.addEventListener('change', function(e) {
+                const selectedBrand = e.target.value;
+                if (selectedBrand === 'All') {
+                    displayData(allMatchaData);
+                } else {
+                    const filteredData = allMatchaData.filter(item => item['Brand'] === selectedBrand);
+                    displayData(filteredData);
+                }
+            });
+        }
+
+        function displayData(matchaList) {
+            const container = document.getElementById('matcha-container');
+            let html = '';
+
+            if (matchaList.length === 0) {
+                container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะสำหรับร้านนี้</p>';
+                return;
+            }
+
+            matchaList.forEach(item => {
+                if(!item['Product Name']) return;
+
+                const imageUrl = item['Image ID'] 
+                    ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w800` 
+                    : 'https://via.placeholder.com/300x200?text=No+Image';
+
+                const tasteHtml = item['Recommended2'] 
+                    ? `<div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2']}</div>` 
+                    : '';
+
+                // --- ส่วนที่ปรับปรุง: แปลงตัวเลขราคาให้มีลูกน้ำ (Comma) ---
+                const priceFormatted = item['Price_JPY'] 
+                    ? Number(item['Price_JPY']).toLocaleString() 
+                    : '-';
+
+                html += `
+                    <div class="card">
+                        <img src="${imageUrl}" alt="${item['Product Name']}" loading="lazy">
+                        <h3>${item['Product Name']}</h3>
+                        <p><strong>ร้าน/แบรนด์:</strong> ${item['Brand']}</p>
+                        <span class="tag">${item['Recommended']}</span>
+                        ${tasteHtml}
+                        <p><strong>น้ำหนัก:</strong> ${item['Weight']}</p>
+                        <p class="price">ราคา: ${priceFormatted} JPY</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        fetchMatchaData();
+    </script>
+</body>
+</html>
