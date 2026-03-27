@@ -3,28 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matcha Catalog</title>
+    <title>Matcha Catalog & Cart</title>
     <style>
         body { font-family: 'Kanit', sans-serif; background-color: #f4f6f5; padding: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: transform 0.2s; display: flex; flex-direction: column; }
         .card:hover { transform: translateY(-5px); }
         .card img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; background-color: #e0e0e0; }
         .card h3 { color: #2e5c23; margin: 12px 0 5px; font-size: 1.2em; }
         .card p { margin: 5px 0; color: #555; font-size: 0.9em; }
         .price { font-weight: bold; color: #b71c1c; font-size: 1.1em !important; }
-        .tag { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px;}
+        .tag { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px; width: fit-content;}
         
-        .taste-box { background-color: #fff8e1; border-left: 4px solid #ffb300; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.85em; color: #555; }
+        .taste-box { background-color: #fff8e1; border-left: 4px solid #ffb300; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.85em; color: #555; flex-grow: 1; }
         
-        .filter-section { text-align: center; margin-bottom: 30px; }
+        .filter-section { text-align: center; margin-bottom: 20px; }
         #brandFilter { padding: 10px 15px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; font-family: 'Kanit', sans-serif; outline: none; cursor: pointer; background-color: white;}
         #brandFilter:hover { border-color: #2e5c23; }
+
+        .add-row { display: flex; gap: 10px; margin-top: auto; padding-top: 15px;}
+        .qty-input { width: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; text-align: center; font-family: 'Kanit', sans-serif;}
+        .add-btn { background-color: #2e5c23; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; flex-grow: 1; font-family: 'Kanit', sans-serif; font-weight: bold; transition: background 0.2s;}
+        .add-btn:hover { background-color: #1b3815; }
+        
+        /* สไตล์พิเศษสำหรับปุ่มและสินค้าที่ "ของหมด" */
+        .out-of-stock-btn { background-color: #9e9e9e !important; cursor: not-allowed !important; color: #fff; }
+
+        .cart-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1200px; margin: 0 auto 30px auto; border-top: 5px solid #2e5c23;}
+        .cart-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .cart-table th, .cart-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 0.95em; vertical-align: middle;}
+        .cart-table th { color: #2e5c23; font-weight: bold; }
+        .remove-btn { background-color: #e53935; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 0.85em;}
+        .remove-btn:hover { background-color: #b71c1c; }
+        .cart-total { text-align: right; font-size: 1.3em; font-weight: bold; color: #b71c1c; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #ccc;}
+
+        .cart-item-info { display: flex; align-items: center; gap: 12px; }
+        .cart-img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background-color: #e0e0e0; flex-shrink: 0; border: 1px solid #ddd;}
+        .cart-item-details { display: flex; flex-direction: column; }
+        .cart-brand { font-size: 0.8em; color: #777; margin-top: 2px;}
     </style>
 </head>
 <body>
 
-    <h1 style="text-align: center; color: #2e5c23;">🍵 คลังข้อมูลมัทฉะ (Matcha Catalog) By TomS Tanawat</h1>
+    <h1 style="text-align: center; color: #2e5c23;">🍵 คลังข้อมูลมัทฉะ (Matcha Catalog)</h1>
     
     <div class="filter-section">
         <label for="brandFilter" style="font-weight: bold; color: #2e5c23; font-size: 1.1em; margin-right: 10px;">🏠 เลือกร้าน/แบรนด์:</label>
@@ -33,49 +54,65 @@
         </select>
     </div>
 
+    <div class="cart-section" id="cart-section" style="display: none;">
+        <h2 style="color: #2e5c23; margin-top: 0; margin-bottom: 10px;">🛒 สรุปรายการที่เลือก</h2>
+        <div style="overflow-x: auto;">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>สินค้าที่เลือก</th>
+                        <th style="text-align:center;">ราคาต่อหน่วย</th>
+                        <th style="text-align:center;">จำนวน</th>
+                        <th style="text-align:right;">รวม (JPY)</th>
+                        <th style="text-align:center;">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-body"></tbody>
+            </table>
+        </div>
+        <div class="cart-total" id="cart-total">ราคารวมทั้งหมด: 0 JPY</div>
+    </div>
+
     <div class="grid" id="matcha-container">
         <p style="text-align:center; width:100%;">กำลังโหลดข้อมูล...</p>
     </div>
 
     <script>
-        // *** วางลิงก์ WEB_APP_URL ของคุณตรงนี้เหมือนเดิมนะครับ ***
+        // *** อย่าลืมวางลิงก์ WEB_APP_URL ของคุณตรงนี้นะครับ ***
         const API_URL = 'https://script.google.com/macros/s/AKfycbyqTpO3AAjoWrNd3V1Frgy8Z5MbKtQC_gD2aWeytPAhfAdPMwbOMtYn8qd7B7HM50ZR/exec';
 
-       let allMatchaData = [];
+        let allMatchaData = [];
+        let cart = []; 
 
         async function fetchMatchaData() {
             try {
-                // 1. ลองเช็คดูก่อนว่าเบราว์เซอร์เคยจำข้อมูลไว้ไหม (ใช้ Session Storage)
-                const cachedData = sessionStorage.getItem('matchaDataCache');
+                // อัปเดตชื่อ Cache เป็น V2 เพื่อบังคับให้โหลดข้อมูลคอลัมน์ Status ใหม่
+                const cachedData = sessionStorage.getItem('matchaDataCacheV2');
                 
                 if (cachedData) {
-                    // ถ้ามีข้อมูลที่จำไว้ ให้ดึงมาโชว์เลยทันที (เร็วมาก)
                     allMatchaData = JSON.parse(cachedData);
+                    allMatchaData.forEach((item, index) => item.id = index);
                     setupFilter(allMatchaData);
                     displayData(allMatchaData);
-                    console.log("โหลดข้อมูลจาก Cache");
                 } else {
-                    // ถ้าไม่มี ค่อยวิ่งไปดึงจาก Google Sheet (ใช้เวลาหน่อย)
                     const response = await fetch(API_URL);
                     allMatchaData = await response.json();
                     
-                    // ดึงเสร็จแล้ว สั่งให้เบราว์เซอร์จำไว้ใช้รอบหน้า
-                    sessionStorage.setItem('matchaDataCache', JSON.stringify(allMatchaData));
+                    allMatchaData.forEach((item, index) => item.id = index);
+                    sessionStorage.setItem('matchaDataCacheV2', JSON.stringify(allMatchaData));
                     
                     setupFilter(allMatchaData);
                     displayData(allMatchaData);
-                    console.log("โหลดข้อมูลจาก API ใหม่");
                 }
-
             } catch (error) {
                 console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
-                document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%;">ไม่สามารถโหลดข้อมูลได้ โปรดตรวจสอบอินเทอร์เน็ตหรือ URL</p>';
+                document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%;">ไม่สามารถโหลดข้อมูลได้</p>';
             }
         }
 
         function setupFilter(data) {
             const filterSelect = document.getElementById('brandFilter');
-            filterSelect.innerHTML = '<option value="All">🍵 ทั้งหมด (All)</option>'; // รีเซ็ตตัวเลือกก่อน
+            filterSelect.innerHTML = '<option value="All">🍵 ทั้งหมด (All)</option>'; 
             
             const uniqueBrands = [...new Set(data.map(item => item['Brand']).filter(brand => brand))];
             
@@ -86,7 +123,6 @@
                 filterSelect.appendChild(option);
             });
 
-            // ลบ Event Listener เก่าออกก่อนป้องกันการทำงานซ้ำซ้อน
             const newFilterSelect = filterSelect.cloneNode(true);
             filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
 
@@ -113,7 +149,6 @@
             matchaList.forEach(item => {
                 if(!item['Product Name']) return;
 
-                // *** เปลี่ยนขนาดรูปเป็น w400 ตรงนี้ครับ ***
                 const imageUrl = item['Image ID'] 
                     ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` 
                     : 'https://via.placeholder.com/300x200?text=No+Image';
@@ -126,20 +161,140 @@
                     ? Number(item['Price_JPY']).toLocaleString() 
                     : '-';
 
+                // --- ส่วนที่เพิ่มเข้ามา: ตรวจสอบสถานะสินค้าของหมด ---
+                // ตัดช่องว่างและทำเป็นตัวพิมพ์เล็ก เพื่อให้รองรับทั้งคำว่า "หมด", "Out of stock", "Sold out"
+                const statusStr = item['Status'] ? String(item['Status']).trim().toLowerCase() : '';
+                const isOutOfStock = statusStr === 'หมด' || statusStr === 'out of stock' || statusStr === 'sold out';
+                
+                // ถ้าระบุว่าของหมด จะแสดงปุ่มสีเทา ไม่มีช่องให้กรอกจำนวน และห้ามกด
+                const actionHtml = isOutOfStock 
+                    ? `<button class="add-btn out-of-stock-btn" disabled>❌ ของหมด</button>`
+                    : `<input type="number" id="qty-${item.id}" value="1" min="1" max="10" class="qty-input">
+                       <button onclick="addToCart(${item.id})" class="add-btn">➕ เพิ่มลงตะกร้า</button>`;
+
+                // ปรับให้การ์ดที่ของหมด ดูสีซีดลงเล็กน้อย (Opacity/Grayscale) เพื่อให้แยกออกจากของปกติได้ชัดเจน
+                const cardStyle = isOutOfStock ? 'opacity: 0.7; filter: grayscale(40%);' : '';
+
                 html += `
-                    <div class="card">
+                    <div class="card" style="${cardStyle}">
                         <img src="${imageUrl}" alt="${item['Product Name']}" loading="lazy">
                         <h3>${item['Product Name']}</h3>
-                        <p><strong>ร้าน/แบรนด์:</strong> ${item['Brand']}</p>
+                        <p style="margin:0;"><strong>ร้าน:</strong> ${item['Brand']}</p>
+                        <p style="margin:5px 0;"><strong>น้ำหนัก:</strong> ${item['Weight']}</p>
                         <span class="tag">${item['Recommended']}</span>
                         ${tasteHtml}
-                        <p><strong>น้ำหนัก:</strong> ${item['Weight']}</p>
                         <p class="price">ราคา: ${priceFormatted} JPY</p>
+                        
+                        <div class="add-row">
+                            ${actionHtml}
+                        </div>
                     </div>
                 `;
             });
 
             container.innerHTML = html;
+        }
+
+        function addToCart(itemId) {
+            const item = allMatchaData.find(m => m.id === itemId);
+            if (!item) return;
+
+            const qtyInput = document.getElementById(`qty-${itemId}`);
+            const qtyToAdd = parseInt(qtyInput.value) || 1;
+            const price = Number(item['Price_JPY']);
+
+            // 1. ตรวจสอบว่ามีราคาหรือไม่
+            if (isNaN(price) || price === 0) {
+                alert('สินค้านี้ยังไม่มีราคา ไม่สามารถคำนวณได้ครับ');
+                return;
+            }
+
+            // 2. ตรวจสอบว่าจำนวนที่ "กำลังจะเพิ่ม" เกิน 10 ชิ้นหรือไม่
+            if (qtyToAdd > 10) {
+                alert(`ขออภัยครับ คุณสามารถเพิ่ม ${item['Product Name']} ได้สูงสุด 10 ชิ้นต่อครั้งครับ`);
+                qtyInput.value = 10; // ปรับกลับเป็น 10 อัตโนมัติ
+                return;
+            }
+
+            const imageUrl = item['Image ID'] 
+                ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w100` 
+                : 'https://via.placeholder.com/100?text=No+Img';
+
+            const existingItem = cart.find(c => c.id === itemId);
+            
+            // 3. ตรวจสอบถ้ารวมกับของเดิมในตะกร้า แล้วจะเกิน 10 ชิ้นไหม
+            if (existingItem) {
+                if (existingItem.qty + qtyToAdd > 10) {
+                    const remainingSlot = 10 - existingItem.qty;
+                    alert(`คุณมีสินค้านี้ในตะกร้าแล้ว ${existingItem.qty} ชิ้น\nสามารถเพิ่มได้อีกสูงสุดแค่ ${remainingSlot} ชิ้นครับ`);
+                    qtyInput.value = remainingSlot > 0 ? remainingSlot : 1;
+                    return;
+                }
+                existingItem.qty += qtyToAdd;
+            } else {
+                // ถ้ายังไม่มีในตะกร้า ก็เพิ่มใหม่ตามปกติ
+                cart.push({
+                    id: item.id,
+                    name: item['Product Name'],
+                    brand: item['Brand'],
+                    imageUrl: imageUrl,
+                    price: price,
+                    qty: qtyToAdd
+                });
+            }
+
+            // รีเซ็ตตัวเลขในช่องกลับเป็น 1 หลังจากเพิ่มสำเร็จ
+            qtyInput.value = 1;
+            updateCartUI();
+            
+            // เลื่อนหน้าจอขึ้นไปบนสุดให้เห็นตะกร้า
+            document.getElementById('cart-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function removeFromCart(itemId) {
+            cart = cart.filter(c => c.id !== itemId);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartSection = document.getElementById('cart-section');
+            const cartBody = document.getElementById('cart-body');
+            const cartTotal = document.getElementById('cart-total');
+
+            if (cart.length === 0) {
+                cartSection.style.display = 'none';
+                return;
+            }
+
+            cartSection.style.display = 'block';
+            let html = '';
+            let grandTotal = 0;
+
+            cart.forEach(item => {
+                const subtotal = item.price * item.qty;
+                grandTotal += subtotal;
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="cart-item-info">
+                                <img src="${item.imageUrl}" alt="${item.name}" class="cart-img" loading="lazy">
+                                <div class="cart-item-details">
+                                    <strong>${item.name}</strong>
+                                    <span class="cart-brand">🏠 ${item.brand}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">${item.price.toLocaleString()}</td>
+                        <td style="text-align:center;">${item.qty}</td>
+                        <td style="text-align:right; font-weight:bold;">${subtotal.toLocaleString()}</td>
+                        <td style="text-align:center;"><button class="remove-btn" onclick="removeFromCart(${item.id})">ลบ</button></td>
+                    </tr>
+                `;
+            });
+
+            cartBody.innerHTML = html;
+            cartTotal.innerHTML = `ยอดรวมสุทธิ: ${grandTotal.toLocaleString()} JPY`;
         }
 
         fetchMatchaData();
