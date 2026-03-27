@@ -3,36 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matcha Catalog & Ranking</title>
-
+    <title>My Matcha</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="My Matcha">
     
     <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w512">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="My Matcha">
-    
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/512/2e5c23/ffffff?text=M">
     
     <style>
         body { font-family: 'Kanit', sans-serif; background-color: #f4f6f5; padding: 20px; margin: 0;}
         .container-main { max-width: 1200px; margin: 0 auto; }
         
-        /* --- ระบบเมนู Tabs --- */
         .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
         .tab-btn { background: none; border: none; font-size: 1.1em; font-family: 'Kanit', sans-serif; cursor: pointer; padding: 10px 20px; color: #777; font-weight: bold; border-radius: 8px; transition: all 0.3s; margin: 5px;}
         .tab-btn:hover { background-color: #e8f5e9; color: #2e5c23; }
         .tab-btn.active { background-color: #2e5c23; color: white; box-shadow: 0 4px 8px rgba(46,92,35,0.3); }
 
-        /* --- สไตล์กล่อง Filter (เลือกร้าน) ให้แสดงทุกหน้า --- */
         .filter-section { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #ddd;}
         #brandFilter { padding: 10px 15px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; font-family: 'Kanit', sans-serif; outline: none; cursor: pointer; background-color: white;}
         #brandFilter:hover { border-color: #2e5c23; }
 
-        /* --- สไตล์ทั่วไปของการ์ดหน้าสั่งซื้อ --- */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: transform 0.2s; display: flex; flex-direction: column; position: relative;}
         .card:hover { transform: translateY(-5px); }
@@ -41,9 +31,8 @@
         .card p { margin: 5px 0; color: #555; font-size: 0.9em; }
         .price { font-weight: bold; color: #b71c1c; font-size: 1.1em !important; }
         .tag { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px; width: fit-content;}
-        .taste-box { background-color: #fff8e1; border-left: 4px solid #ffb300; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.85em; color: #555; flex-grow: 1; }
+        .taste-box { background-color: #fff8e1; border-left: 4px solid #ffb300; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.85em; color: #555; flex-grow: 1; line-height: 1.4; }
         
-        /* --- สไตล์ตะกร้าและปุ่ม --- */
         .add-row { display: flex; gap: 10px; margin-top: auto; padding-top: 15px;}
         .qty-input { width: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; text-align: center; font-family: 'Kanit', sans-serif;}
         .add-btn { background-color: #2e5c23; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; flex-grow: 1; font-family: 'Kanit', sans-serif; font-weight: bold; transition: background 0.2s;}
@@ -59,27 +48,19 @@
         .cart-item-info { display: flex; align-items: center; gap: 12px; }
         .cart-img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background-color: #e0e0e0; flex-shrink: 0; border: 1px solid #ddd;}
         
-        /* ================= สไตล์ใหม่: หน้า Ranking แบบ Timeline ================= */
         .brand-header { color: #2e5c23; border-bottom: 2px solid #2e5c23; padding-bottom: 10px; margin-top: 20px; margin-bottom: 10px; display: inline-block; text-align: center; width: 100%; font-size: 1.8em;}
-        
         .timeline-container { position: relative; max-width: 900px; margin: 40px auto; padding: 20px 0; }
-        
         .timeline-container::after { content: ''; position: absolute; width: 30px; background: linear-gradient(to bottom, #1b3815 0%, #4CAF50 50%, #aed581 100%); top: 0; bottom: 0; left: 50%; transform: translateX(-50%); border-radius: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
-        
         .timeline-row { position: relative; width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; z-index: 1; }
         .timeline-left, .timeline-right { width: 45%; }
-        
         .timeline-center-dot { position: absolute; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background-color: #fff; border: 4px solid #2e5c23; border-radius: 50%; z-index: 2; box-shadow: 0 0 5px rgba(0,0,0,0.3);}
-        
         .ranking-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 15px; align-items: center; transition: transform 0.2s; border: 1px solid #f0f0f0; position: relative;}
         .ranking-card:hover { transform: scale(1.02); z-index: 10;}
         .ranking-card img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #e8f5e9; flex-shrink: 0;}
-        
         .ranking-details { flex-grow: 1; text-align: left; }
         .ranking-details h3 { margin: 0 0 5px 0; color: #2e5c23; font-size: 1.1em; line-height: 1.2;}
         .ranking-rating { font-weight: bold; color: #fff; background: #f57f17; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 4px rgba(245, 127, 23, 0.3);}
         
-        /* รองรับหน้าจอมือถือ */
         @media (max-width: 768px) {
             .timeline-container::after { left: 20px; width: 20px; transform: none;}
             .timeline-center-dot { left: 20px; transform: translateX(2px); width: 12px; height: 12px; }
@@ -109,6 +90,7 @@
         </div>
 
         <div id="view-shop">
+            
             <div class="cart-section" id="cart-section" style="display: none;">
                 <h2 style="color: #2e5c23; margin-top: 0; margin-bottom: 10px;">🛒 สรุปรายการที่เลือก</h2>
                 <div style="overflow-x: auto;">
@@ -125,7 +107,24 @@
                         <tbody id="cart-body"></tbody>
                     </table>
                 </div>
-                <div class="cart-total" id="cart-total">ราคารวมทั้งหมด: 0 JPY</div>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed #ccc;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
+                        
+                        <div style="flex-grow: 1; max-width: 400px;">
+                            <label for="customer-name" style="font-weight: bold; color: #2e5c23; display: block; margin-bottom: 5px;">👤 ชื่อผู้สั่ง:</label>
+                            <input type="text" id="customer-name" placeholder="กรอกชื่อของคุณ (เช่น คุณ A)..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 1em; outline: none; box-sizing: border-box;">
+                        </div>
+                        
+                        <div style="text-align: right;">
+                            <div class="cart-total" id="cart-total" style="border: none; margin: 0 0 10px 0; padding: 0;">ยอดรวมสุทธิ: 0 JPY</div>
+                            <button id="checkout-btn" onclick="sendOrderEmail()" style="background-color: #f57f17; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1.1em; font-family: 'Kanit', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                📩 ยืนยันรายการ & ส่งออเดอร์
+                            </button>
+                        </div>
+                        
+                    </div>
+                </div>
             </div>
 
             <div class="grid" id="matcha-container">
@@ -135,8 +134,7 @@
 
         <div id="view-ranking" style="display: none;">
             <p style="text-align: center; color: #555; margin-bottom: 40px; margin-top: -15px;">เรียงลำดับมัทฉะจากเกรดพรีเมียมสูงสุด และราคาตามลำดับ</p>
-            <div id="ranking-container">
-                </div>
+            <div id="ranking-container"></div>
         </div>
 
     </div>
@@ -150,8 +148,8 @@
 
         async function fetchMatchaData() {
             try {
-                // อัปเดต Cache เป็น V6 เพื่อโหลดข้อมูลใหม่
-                const cachedData = sessionStorage.getItem('matchaDataCacheV6');
+                // อัปเดต Cache
+                const cachedData = sessionStorage.getItem('matchaDataCacheV7');
                 
                 if (cachedData) {
                     allMatchaData = JSON.parse(cachedData);
@@ -164,7 +162,7 @@
                     allMatchaData = await response.json();
                     
                     allMatchaData.forEach((item, index) => item.id = index);
-                    sessionStorage.setItem('matchaDataCacheV6', JSON.stringify(allMatchaData));
+                    sessionStorage.setItem('matchaDataCacheV7', JSON.stringify(allMatchaData));
                     
                     setupFilter(allMatchaData);
                     displayData(allMatchaData);
@@ -176,26 +174,20 @@
             }
         }
 
-        // --- ระบบสลับหน้า (Tabs) ---
         function switchTab(tabName) {
             document.getElementById('view-shop').style.display = tabName === 'shop' ? 'block' : 'none';
             document.getElementById('view-ranking').style.display = tabName === 'ranking' ? 'block' : 'none';
-            
             document.getElementById('tab-shop').className = tabName === 'shop' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-ranking').className = tabName === 'ranking' ? 'tab-btn active' : 'tab-btn';
         }
 
-        // --- 🌟 ระบบสร้างหน้าจัดอันดับ (อัปเดตให้แสดงข้อความเต็มๆ และรองรับ Filter) ---
         function generateRankingView(data) {
             const container = document.getElementById('ranking-container');
             let html = '';
-
-            // ใช้ข้อมูล data ที่ผ่านการ Filter มาแล้ว
             const uniqueBrands = [...new Set(data.map(item => item['Brand']).filter(brand => brand))];
 
             uniqueBrands.forEach(brand => {
                 let brandItems = data.filter(item => item['Brand'] === brand);
-                
                 brandItems.sort((a, b) => {
                     let ratingA = Number(a['Rating']) || 0;
                     let ratingB = Number(b['Rating']) || 0;
@@ -207,18 +199,12 @@
 
                 brandItems.forEach((item, index) => {
                     if(!item['Product Name']) return;
-                    
                     const isLeft = index % 2 === 0; 
-                    
-                    const imageUrl = item['Image ID'] 
-                        ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w200` 
-                        : 'https://via.placeholder.com/200?text=No+Image';
-                        
+                    const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w200` : 'https://via.placeholder.com/200?text=No+Image';
                     const ratingValue = Number(item['Rating']) || 0;
                     const detailText = item['Recommended2'] || item['Recommended'] || '';
                     const priceText = item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() + ' JPY' : '-';
 
-                    // *แก้ไขแล้ว* นำโค้ดที่ตัดบรรทัดออก เพื่อให้ข้อความแสดงเต็ม 100% (ลบ line-clamp ออก)
                     const cardHtml = `
                         <div class="ranking-card">
                             <img src="${imageUrl}" alt="${item['Product Name']}" loading="lazy">
@@ -239,19 +225,14 @@
                         </div>
                     `;
                 });
-                
                 html += `</div>`;
             });
-
             container.innerHTML = html;
         }
 
-        // --- ระบบ Filter (อัปเดตให้อัปเดตทั้งหน้าสั่งซื้อและหน้าจัดอันดับ) ---
         function setupFilter(data) {
             const filterSelect = document.getElementById('brandFilter');
             filterSelect.innerHTML = '<option value="All">🍵 ทั้งหมด (All)</option>'; 
-            
-            // ดึงแบรนด์ทั้งหมดจาก allMatchaData เสมอ เพื่อให้เมนู Dropdown มีชื่อร้านครบตลอด
             const uniqueBrands = [...new Set(allMatchaData.map(item => item['Brand']).filter(brand => brand))];
             
             uniqueBrands.forEach(brand => {
@@ -267,8 +248,6 @@
             newFilterSelect.addEventListener('change', function(e) {
                 const selectedBrand = e.target.value;
                 const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
-                
-                // สั่งให้อัปเดตข้อมูลทั้ง 2 หน้าพร้อมกัน
                 displayData(filteredData);
                 generateRankingView(filteredData); 
             });
@@ -283,11 +262,7 @@
             let html = '';
             matchaList.forEach(item => {
                 if(!item['Product Name']) return;
-
-                const imageUrl = item['Image ID'] 
-                    ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` 
-                    : 'https://via.placeholder.com/300x200?text=No+Image';
-
+                const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` : 'https://via.placeholder.com/300x200?text=No+Image';
                 const tasteHtml = item['Recommended2'] ? `<div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2']}</div>` : '';
                 const priceFormatted = item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() : '-';
                 
@@ -316,7 +291,6 @@
             container.innerHTML = html;
         }
 
-        // --- ระบบตะกร้า ---
         function addToCart(itemId) {
             const item = allMatchaData.find(m => m.id === itemId);
             if (!item) return;
@@ -351,7 +325,6 @@
             qtyInput.value = 1;
             updateCartUI();
             
-            // เลื่อนจอขึ้นให้เห็นตะกร้าเฉพาะตอนอยู่หน้าสั่งซื้อ
             if (document.getElementById('view-shop').style.display !== 'none') {
                 document.getElementById('cart-section').scrollIntoView({ behavior: 'smooth' });
             }
@@ -376,6 +349,7 @@
             cart.forEach(item => {
                 const subtotal = item.price * item.qty;
                 grandTotal += subtotal;
+                
                 html += `
                     <tr>
                         <td>
@@ -395,6 +369,59 @@
             });
             cartBody.innerHTML = html;
             cartTotal.innerHTML = `ยอดรวมสุทธิ: ${grandTotal.toLocaleString()} JPY`;
+        }
+
+        // --- ฟังก์ชันส่งอีเมลรายการสั่งซื้อ ---
+        function sendOrderEmail() {
+            if (cart.length === 0) {
+                alert("ไม่มีสินค้าในตะกร้าครับ");
+                return;
+            }
+
+            const customerNameInput = document.getElementById('customer-name');
+            const customerName = customerNameInput.value.trim();
+
+            if (!customerName) {
+                alert("กรุณากรอก 'ชื่อผู้สั่ง' ก่อนกดยืนยันรายการครับ 🍵");
+                customerNameInput.focus();
+                return;
+            }
+
+            let grandTotal = 0;
+            cart.forEach(item => { grandTotal += item.price * item.qty; });
+
+            const orderData = {
+                customerName: customerName,
+                cart: cart,
+                total: grandTotal
+            };
+
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.innerText = "⏳ กำลังส่งข้อมูล...";
+            checkoutBtn.style.backgroundColor = "#9e9e9e";
+            checkoutBtn.disabled = true;
+
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(orderData)
+            }).then(() => {
+                alert("✅ ส่งข้อมูลออเดอร์ของคุณ " + customerName + " สำเร็จเรียบร้อยครับ!");
+                cart = [];
+                customerNameInput.value = ""; 
+                updateCartUI();
+                
+                checkoutBtn.innerText = "📩 ยืนยันรายการ & ส่งออเดอร์";
+                checkoutBtn.style.backgroundColor = "#f57f17";
+                checkoutBtn.disabled = false;
+            }).catch((error) => {
+                console.error("Error:", error);
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูลครับ");
+                checkoutBtn.innerText = "📩 ยืนยันรายการ & ส่งออเดอร์";
+                checkoutBtn.style.backgroundColor = "#f57f17";
+                checkoutBtn.disabled = false;
+            });
         }
 
         fetchMatchaData();
