@@ -291,7 +291,7 @@
             container.innerHTML = html;
         }
 
-        function addToCart(itemId) {
+       function addToCart(itemId) {
             const item = allMatchaData.find(m => m.id === itemId);
             if (!item) return;
 
@@ -322,12 +322,13 @@
                 cart.push({ id: item.id, name: item['Product Name'], brand: item['Brand'], imageUrl: imageUrl, price: price, qty: qtyToAdd });
             }
 
+            // รีเซ็ตจำนวนในช่องกรอกกลับเป็น 1 และอัปเดตตะกร้า
             qtyInput.value = 1;
             updateCartUI();
             
-            if (document.getElementById('view-shop').style.display !== 'none') {
-                document.getElementById('cart-section').scrollIntoView({ behavior: 'smooth' });
-            }
+            // ❌ ลบคำสั่ง scrollIntoView ออกแล้ว 
+            // คราวนี้เวลาเลือกสินค้า หน้าจอจะอยู่ที่เดิม ไม่เด้งขึ้นไปกวนใจแล้วครับ!
+        }
         }
 
         function removeFromCart(itemId) {
