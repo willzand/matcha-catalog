@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-title" content="My Matcha">
     
     <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w512">
-    
     <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w128">
     <link rel="shortcut icon" type="image/png" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w128">
     
@@ -22,9 +21,23 @@
         .tab-btn:hover { background-color: #e8f5e9; color: #2e5c23; }
         .tab-btn.active { background-color: #2e5c23; color: white; box-shadow: 0 4px 8px rgba(46,92,35,0.3); }
 
-        .filter-section { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #ddd;}
-        #brandFilter { padding: 10px 15px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; font-family: 'Kanit', sans-serif; outline: none; cursor: pointer; background-color: white;}
-        #brandFilter:hover { border-color: #2e5c23; }
+        .control-panel { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #ddd; flex-wrap: wrap;}
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-select { padding: 10px 15px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; font-family: 'Kanit', sans-serif; outline: none; cursor: pointer; background-color: white;}
+        .filter-select:hover { border-color: #2e5c23; }
+
+        /* --- สไตล์สำหรับ Dropdown ธงชาติแบบใหม่ --- */
+        .currency-selector { position: relative; display: inline-block; width: 170px; font-family: 'Kanit', sans-serif; user-select: none;}
+        .currency-display { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; background-color: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 1em; color: #333; transition: border-color 0.2s;}
+        .currency-display:hover { border-color: #2e5c23; }
+        .currency-display img { width: 24px; height: 16px; margin-right: 10px; border-radius: 2px; border: 1px solid #eee; object-fit: cover;}
+        .currency-display-content { display: flex; align-items: center; }
+        .currency-options { position: absolute; top: 100%; left: 0; right: 0; background-color: white; border: 1px solid #ccc; border-radius: 8px; margin-top: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; display: none; overflow: hidden;}
+        .currency-options.show { display: block; }
+        .currency-option { padding: 12px 15px; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;}
+        .currency-option:hover { background-color: #e8f5e9; color: #2e5c23; font-weight: bold;}
+        .currency-option img { width: 24px; height: 16px; margin-right: 10px; border-radius: 2px; border: 1px solid #eee; object-fit: cover;}
+        .arrow-down { border: solid #666; border-width: 0 2px 2px 0; display: inline-block; padding: 3px; transform: rotate(45deg); margin-bottom: 2px;}
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: transform 0.2s; display: flex; flex-direction: column; position: relative;}
@@ -64,32 +77,13 @@
         .ranking-details h3 { margin: 0 0 5px 0; color: #2e5c23; font-size: 1.1em; line-height: 1.2;}
         .ranking-rating { font-weight: bold; color: #fff; background: #f57f17; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 4px rgba(245, 127, 23, 0.3);}
         
-        /* กล่องข้อความแจ้งเตือน (Toast) */
         #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: #2e5c23;
-            color: #fff;
-            text-align: center;
-            border-radius: 30px;
-            padding: 16px 20px;
-            position: fixed;
-            z-index: 9999;
-            left: 50%;
-            bottom: 30px;
-            transform: translateX(-50%);
-            font-size: 1.1em;
-            font-family: 'Kanit', sans-serif;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s;
+            visibility: hidden; min-width: 250px; background-color: #2e5c23; color: #fff; text-align: center; border-radius: 30px;
+            padding: 16px 20px; position: fixed; z-index: 9999; left: 50%; bottom: 30px; transform: translateX(-50%);
+            font-size: 1.1em; font-family: 'Kanit', sans-serif; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0; transition: opacity 0.3s, bottom 0.3s;
         }
-        #toast.show {
-            visibility: visible;
-            opacity: 1;
-            bottom: 50px;
-        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
         @media (max-width: 768px) {
             .timeline-container::after { left: 20px; width: 20px; transform: none;}
@@ -101,6 +95,7 @@
             .ranking-card img { width: 100px; height: 100px; }
             #toast { min-width: 80%; bottom: 20px; }
             #toast.show { bottom: 40px; }
+            .control-panel { flex-direction: column; gap: 10px; align-items: stretch; }
         }
     </style>
 </head>
@@ -108,7 +103,6 @@
 
     <div class="container-main">
         <h1 style="text-align: center; color: #2e5c23; margin-top: 20px;">🍵 Matcha Catalog By TomS Tanawat</h1>
-        
         <p style="text-align: center; color: #777; font-size: 0.95em; margin-top: -10px; margin-bottom: 25px;">
             🕒 อัปเดตข้อมูลและราคาล่าสุด: 16/04/2026
         </p>
@@ -118,15 +112,38 @@
             <button class="tab-btn" id="tab-ranking" onclick="switchTab('ranking')">⭐ Ranking Matcha Guide</button>
         </div>
 
-        <div class="filter-section">
-            <label for="brandFilter" style="font-weight: bold; color: #2e5c23; font-size: 1.1em; margin-right: 10px;">🏠 เลือกร้าน/แบรนด์:</label>
-            <select id="brandFilter">
-                <option value="All">🍵 ทั้งหมด (All)</option>
-            </select>
+        <div class="control-panel">
+            <div class="filter-group">
+                <label for="brandFilter" style="font-weight: bold; color: #2e5c23; font-size: 1.1em;">🏠 เลือกร้าน/แบรนด์:</label>
+                <select id="brandFilter" class="filter-select">
+                    <option value="All">🍵 ทั้งหมด (All)</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label style="font-weight: bold; color: #b71c1c; font-size: 1.1em;">💰 แสดงราคา:</label>
+                
+                <div class="currency-selector" id="currencySelector">
+                    <div class="currency-display" onclick="toggleCurrencyDropdown()">
+                        <div class="currency-display-content" id="selectedCurrencyContent">
+                            <img src="https://flagcdn.com/w40/jp.png" alt="JPY"> เยน (JPY)
+                        </div>
+                        <i class="arrow-down"></i>
+                    </div>
+                    <div class="currency-options" id="currencyOptions">
+                        <div class="currency-option" onclick="selectCurrency('JPY', 'https://flagcdn.com/w40/jp.png', 'เยน (JPY)')">
+                            <img src="https://flagcdn.com/w40/jp.png" alt="JPY"> เยน (JPY)
+                        </div>
+                        <div class="currency-option" onclick="selectCurrency('THB', 'https://flagcdn.com/w40/th.png', 'บาท (THB)')">
+                            <img src="https://flagcdn.com/w40/th.png" alt="THB"> บาท (THB)
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
         <div id="view-shop">
-            
             <div class="cart-section" id="cart-section" style="display: none;">
                 <h2 style="color: #2e5c23; margin-top: 0; margin-bottom: 10px;">🛒 สรุปรายการที่เลือก</h2>
                 <div style="overflow-x: auto;">
@@ -136,7 +153,7 @@
                                 <th>สินค้าที่เลือก</th>
                                 <th style="text-align:center;">ราคาต่อหน่วย</th>
                                 <th style="text-align:center;">จำนวน</th>
-                                <th style="text-align:right;">รวม (JPY)</th>
+                                <th style="text-align:right;">รวม</th>
                                 <th style="text-align:center;">จัดการ</th>
                             </tr>
                         </thead>
@@ -146,23 +163,19 @@
                 
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed #ccc;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
-                        
                         <div style="flex-grow: 1; max-width: 400px;">
-                            <label for="customer-name" style="font-weight: bold; color: #2e5c23; display: block; margin-bottom: 5px;">👤 ชื่อผู้สั่ง:</label>
-                            <input type="text" id="customer-name" placeholder="กรอกชื่อของคุณ (เช่น คุณ A)..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 1em; outline: none; box-sizing: border-box;">
+                            <label for="customer-name" style="font-weight: bold; color: #2e5c23; display: block; margin-bottom: 5px;">👤 ชื่อผู้สั่ง (ถ้ามี):</label>
+                            <input type="text" id="customer-name" placeholder="ระบุชื่อ (เว้นว่างได้)..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 1em; outline: none; box-sizing: border-box;">
                         </div>
-                        
                         <div style="text-align: right;">
-                            <div class="cart-total" id="cart-total" style="border: none; margin: 0 0 10px 0; padding: 0;">ยอดรวมสุทธิ: 0 JPY</div>
+                            <div class="cart-total" id="cart-total" style="border: none; margin: 0 0 10px 0; padding: 0;">ยอดรวมสุทธิ: 0</div>
                             <button id="checkout-btn" onclick="sendOrderEmail()" style="background-color: #f57f17; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1.1em; font-family: 'Kanit', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                📩 ยืนยันรายการ & ส่งออเดอร์
+                                ✅ ยืนยันรายการ & ส่งออเดอร์
                             </button>
                         </div>
-                        
                     </div>
                 </div>
             </div>
-
             <div class="grid" id="matcha-container">
                 <p style="text-align:center; width:100%;">กำลังโหลดข้อมูล...</p>
             </div>
@@ -172,41 +185,64 @@
             <p style="text-align: center; color: #555; margin-bottom: 40px; margin-top: -15px;">เรียงลำดับมัทฉะจากเกรดพรีเมียมสูงสุด และราคาตามลำดับ</p>
             <div id="ranking-container"></div>
         </div>
-
     </div>
 
     <div id="toast">แจ้งเตือน</div>
 
     <script>
-        // API_URL ของคุณ
         const API_URL = 'https://script.google.com/macros/s/AKfycbyqTpO3AAjoWrNd3V1Frgy8Z5MbKtQC_gD2aWeytPAhfAdPMwbOMtYn8qd7B7HM50ZR/exec';
 
         let allMatchaData = [];
         let cart = []; 
+        let currentCurrency = 'JPY'; 
+
+        // ระบบเปิดปิด Dropdown ธงชาติ
+        function toggleCurrencyDropdown() {
+            document.getElementById("currencyOptions").classList.toggle("show");
+        }
+
+        // ปิด Dropdown ถือคลิกพื้นที่ว่าง
+        window.onclick = function(event) {
+          if (!event.target.closest('.currency-selector')) {
+            var dropdowns = document.getElementsByClassName("currency-options");
+            for (var i = 0; i < dropdowns.length; i++) {
+              var openDropdown = dropdowns[i];
+              if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+              }
+            }
+          }
+        }
+
+        // เมื่อเลือกค่าเงินใหม่
+        function selectCurrency(currencyCode, flagSrc, text) {
+            document.getElementById("selectedCurrencyContent").innerHTML = `<img src="${flagSrc}" alt="${currencyCode}"> ${text}`;
+            document.getElementById("currencyOptions").classList.remove("show");
+            
+            currentCurrency = currencyCode;
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
+            
+            displayData(filteredData);
+            generateRankingView(filteredData);
+            updateCartUI(); 
+        }
 
         async function fetchMatchaData() {
             try {
-                const cachedData = sessionStorage.getItem('matchaDataCacheV10');
-                
+                const cachedData = sessionStorage.getItem('matchaDataCacheV12');
                 if (cachedData) {
                     allMatchaData = JSON.parse(cachedData);
                     allMatchaData.forEach((item, index) => item.id = index);
-                    setupFilter(allMatchaData);
-                    displayData(allMatchaData);
-                    generateRankingView(allMatchaData); 
+                    setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
                 } else {
                     const response = await fetch(API_URL);
                     allMatchaData = await response.json();
-                    
                     allMatchaData.forEach((item, index) => item.id = index);
-                    sessionStorage.setItem('matchaDataCacheV10', JSON.stringify(allMatchaData));
-                    
-                    setupFilter(allMatchaData);
-                    displayData(allMatchaData);
-                    generateRankingView(allMatchaData); 
+                    sessionStorage.setItem('matchaDataCacheV12', JSON.stringify(allMatchaData));
+                    setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
                 }
             } catch (error) {
-                console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
                 document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%; color:red;">เกิดข้อผิดพลาด! กรุณาตรวจสอบ Google Apps Script</p>';
             }
         }
@@ -220,11 +256,16 @@
 
         function showToast(message) {
             const toast = document.getElementById("toast");
-            toast.innerText = message;
-            toast.className = "show";
-            setTimeout(function() { 
-                toast.className = toast.className.replace("show", ""); 
-            }, 2500);
+            toast.innerText = message; toast.className = "show";
+            setTimeout(function() { toast.className = toast.className.replace("show", ""); }, 2500);
+        }
+
+        function getDisplayPrice(item) {
+            if (currentCurrency === 'THB') {
+                return item['Price_THB'] ? Number(item['Price_THB']).toLocaleString() + ' THB' : '-';
+            } else {
+                return item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() + ' JPY' : '-';
+            }
         }
 
         function generateRankingView(data) {
@@ -234,11 +275,7 @@
 
             uniqueBrands.forEach(brand => {
                 let brandItems = data.filter(item => item['Brand'] === brand);
-                brandItems.sort((a, b) => {
-                    let ratingA = Number(a['Rating']) || 0;
-                    let ratingB = Number(b['Rating']) || 0;
-                    return ratingB - ratingA;
-                });
+                brandItems.sort((a, b) => (Number(b['Rating']) || 0) - (Number(a['Rating']) || 0));
 
                 html += `<h2 class="brand-header">🏠 ${brand} Guide</h2>`;
                 html += `<div class="timeline-container">`;
@@ -249,7 +286,7 @@
                     const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w200` : 'https://via.placeholder.com/200?text=No+Image';
                     const ratingValue = Number(item['Rating']) || 0;
                     const detailText = item['Recommended2'] || item['Recommended'] || '';
-                    const priceText = item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() + ' JPY' : '-';
+                    const priceText = getDisplayPrice(item); 
 
                     const cardHtml = `
                         <div class="ranking-card">
@@ -280,12 +317,9 @@
             const filterSelect = document.getElementById('brandFilter');
             filterSelect.innerHTML = '<option value="All">🍵 ทั้งหมด (All)</option>'; 
             const uniqueBrands = [...new Set(allMatchaData.map(item => item['Brand']).filter(brand => brand))];
-            
             uniqueBrands.forEach(brand => {
                 const option = document.createElement('option');
-                option.value = brand;
-                option.textContent = brand;
-                filterSelect.appendChild(option);
+                option.value = brand; option.textContent = brand; filterSelect.appendChild(option);
             });
             
             const newFilterSelect = filterSelect.cloneNode(true);
@@ -294,23 +328,20 @@
             newFilterSelect.addEventListener('change', function(e) {
                 const selectedBrand = e.target.value;
                 const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
-                displayData(filteredData);
-                generateRankingView(filteredData); 
+                displayData(filteredData); generateRankingView(filteredData); 
             });
         }
 
         function displayData(matchaList) {
             const container = document.getElementById('matcha-container');
-            if (matchaList.length === 0) {
-                container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะ</p>';
-                return;
-            }
+            if (matchaList.length === 0) { container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะ</p>'; return; }
+            
             let html = '';
             matchaList.forEach(item => {
                 if(!item['Product Name']) return;
                 const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` : 'https://via.placeholder.com/300x200?text=No+Image';
                 const tasteHtml = item['Recommended2'] ? `<div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2']}</div>` : '';
-                const priceFormatted = item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() : '-';
+                const priceFormatted = getDisplayPrice(item); 
                 
                 const statusStr = item['Status'] ? String(item['Status']).trim().toLowerCase() : '';
                 const isOutOfStock = statusStr === 'หมด' || statusStr === 'out of stock' || statusStr === 'sold out';
@@ -329,7 +360,7 @@
                         <p style="margin:5px 0;"><strong>น้ำหนัก:</strong> ${item['Weight']}</p>
                         <span class="tag">${item['Recommended']}</span>
                         ${tasteHtml}
-                        <p class="price">ราคา: ${priceFormatted} JPY</p>
+                        <p class="price">ราคา: ${priceFormatted}</p>
                         <div class="add-row">${actionHtml}</div>
                     </div>
                 `;
@@ -343,9 +374,11 @@
 
             const qtyInput = document.getElementById(`qty-${itemId}`);
             const qtyToAdd = parseInt(qtyInput.value) || 1;
-            const price = Number(item['Price_JPY']);
+            
+            const priceJPY = Number(item['Price_JPY']) || 0;
+            const priceTHB = Number(item['Price_THB']) || 0;
 
-            if (isNaN(price) || price === 0) {
+            if (priceJPY === 0 && priceTHB === 0) {
                 alert('สินค้านี้ยังไม่มีราคา ไม่สามารถคำนวณได้ครับ'); return;
             }
             if (qtyToAdd > 10) {
@@ -360,12 +393,11 @@
                 if (existingItem.qty + qtyToAdd > 10) {
                     const remainingSlot = 10 - existingItem.qty;
                     alert(`คุณมีสินค้านี้ในตะกร้าแล้ว ${existingItem.qty} ชิ้น\nสามารถเพิ่มได้อีกสูงสุดแค่ ${remainingSlot} ชิ้นครับ`);
-                    qtyInput.value = remainingSlot > 0 ? remainingSlot : 1;
-                    return;
+                    qtyInput.value = remainingSlot > 0 ? remainingSlot : 1; return;
                 }
                 existingItem.qty += qtyToAdd;
             } else {
-                cart.push({ id: item.id, name: item['Product Name'], brand: item['Brand'], imageUrl: imageUrl, price: price, qty: qtyToAdd });
+                cart.push({ id: item.id, name: item['Product Name'], brand: item['Brand'], imageUrl: imageUrl, priceJPY: priceJPY, priceTHB: priceTHB, qty: qtyToAdd });
             }
 
             qtyInput.value = 1;
@@ -387,11 +419,17 @@
 
             cartSection.style.display = 'block';
             let html = '';
-            let grandTotal = 0;
+            let grandTotalJPY = 0;
+            let grandTotalTHB = 0;
 
             cart.forEach(item => {
-                const subtotal = item.price * item.qty;
-                grandTotal += subtotal;
+                const subtotalJPY = item.priceJPY * item.qty;
+                const subtotalTHB = item.priceTHB * item.qty;
+                grandTotalJPY += subtotalJPY;
+                grandTotalTHB += subtotalTHB;
+                
+                const displayPrice = currentCurrency === 'THB' ? item.priceTHB : item.priceJPY;
+                const displaySubtotal = currentCurrency === 'THB' ? subtotalTHB : subtotalJPY;
                 
                 html += `
                     <tr>
@@ -403,66 +441,55 @@
                                 </div>
                             </div>
                         </td>
-                        <td style="text-align:center;">${item.price.toLocaleString()}</td>
+                        <td style="text-align:center;">${displayPrice.toLocaleString()}</td>
                         <td style="text-align:center;">${item.qty}</td>
-                        <td style="text-align:right; font-weight:bold;">${subtotal.toLocaleString()}</td>
+                        <td style="text-align:right; font-weight:bold;">${displaySubtotal.toLocaleString()} ${currentCurrency}</td>
                         <td style="text-align:center;"><button class="remove-btn" onclick="removeFromCart(${item.id})">ลบ</button></td>
                     </tr>
                 `;
             });
             cartBody.innerHTML = html;
-            cartTotal.innerHTML = `ยอดรวมสุทธิ: ${grandTotal.toLocaleString()} JPY`;
+            
+            const finalTotalDisplay = currentCurrency === 'THB' ? grandTotalTHB : grandTotalJPY;
+            cartTotal.innerHTML = `ยอดรวมสุทธิ: ${finalTotalDisplay.toLocaleString()} ${currentCurrency}`;
         }
 
         function sendOrderEmail() {
-            if (cart.length === 0) {
-                alert("ไม่มีสินค้าในตะกร้าครับ");
-                return;
-            }
-
+            if (cart.length === 0) { alert("ไม่มีสินค้าในตะกร้าครับ"); return; }
             const customerNameInput = document.getElementById('customer-name');
             const customerName = customerNameInput.value.trim();
+            if (!customerName) { alert("กรุณากรอก 'ชื่อผู้สั่ง' ก่อนกดยืนยันรายการครับ 🍵"); customerNameInput.focus(); return; }
 
-            if (!customerName) {
-                alert("กรุณากรอก 'ชื่อผู้สั่ง' ก่อนกดยืนยันรายการครับ 🍵");
-                customerNameInput.focus();
-                return;
-            }
-
-            let grandTotal = 0;
-            cart.forEach(item => { grandTotal += item.price * item.qty; });
+            let grandTotalJPY = 0;
+            let grandTotalTHB = 0;
+            cart.forEach(item => { 
+                grandTotalJPY += item.priceJPY * item.qty; 
+                grandTotalTHB += item.priceTHB * item.qty;
+            });
 
             const orderData = {
                 customerName: customerName,
                 cart: cart,
-                total: grandTotal
+                totalJPY: grandTotalJPY,
+                totalTHB: grandTotalTHB
             };
 
             const checkoutBtn = document.getElementById('checkout-btn');
             checkoutBtn.innerText = "⏳ กำลังส่งข้อมูล...";
-            checkoutBtn.style.backgroundColor = "#9e9e9e";
-            checkoutBtn.disabled = true;
+            checkoutBtn.style.backgroundColor = "#9e9e9e"; checkoutBtn.disabled = true;
 
             fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
+                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(orderData)
             }).then(() => {
                 showToast(`🎉 ส่งออเดอร์ของคุณ ${customerName} สำเร็จแล้ว!`);
-                cart = [];
-                customerNameInput.value = ""; 
-                updateCartUI();
-                
-                checkoutBtn.innerText = "📩 ยืนยันรายการ & ส่งออเดอร์";
-                checkoutBtn.style.backgroundColor = "#f57f17";
-                checkoutBtn.disabled = false;
+                cart = []; customerNameInput.value = ""; updateCartUI();
+                checkoutBtn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์";
+                checkoutBtn.style.backgroundColor = "#f57f17"; checkoutBtn.disabled = false;
             }).catch((error) => {
-                console.error("Error:", error);
                 alert("เกิดข้อผิดพลาดในการส่งข้อมูลครับ");
-                checkoutBtn.innerText = "📩 ยืนยันรายการ & ส่งออเดอร์";
-                checkoutBtn.style.backgroundColor = "#f57f17";
-                checkoutBtn.disabled = false;
+                checkoutBtn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์";
+                checkoutBtn.style.backgroundColor = "#f57f17"; checkoutBtn.disabled = false;
             });
         }
 
