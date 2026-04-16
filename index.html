@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Matcha</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="My Matcha">
     
     <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w512">
+    
+    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w128">
+    <link rel="shortcut icon" type="image/png" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w128">
     
     <style>
         body { font-family: 'Kanit', sans-serif; background-color: #f4f6f5; padding: 20px; margin: 0;}
@@ -61,11 +65,10 @@
         .ranking-details h3 { margin: 0 0 5px 0; color: #2e5c23; font-size: 1.1em; line-height: 1.2;}
         .ranking-rating { font-weight: bold; color: #fff; background: #f57f17; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; display: inline-block; margin-bottom: 5px; box-shadow: 0 2px 4px rgba(245, 127, 23, 0.3);}
         
-        /* --- สไตล์ของป๊อปอัปแจ้งเตือน (Toast) --- */
         #toast {
             visibility: hidden;
             min-width: 250px;
-            background-color: #2e5c23; /* สีเขียวมัทฉะ */
+            background-color: #2e5c23;
             color: #fff;
             text-align: center;
             border-radius: 30px;
@@ -211,12 +214,10 @@
             document.getElementById('tab-ranking').className = tabName === 'ranking' ? 'tab-btn active' : 'tab-btn';
         }
 
-        // --- ฟังก์ชันแสดงป๊อปอัปแจ้งเตือน ---
         function showToast(message) {
             const toast = document.getElementById("toast");
             toast.innerText = message;
             toast.className = "show";
-            // สั่งให้ซ่อนตัวเองหลังจากผ่านไป 2.5 วินาที
             setTimeout(function() { 
                 toast.className = toast.className.replace("show", ""); 
             }, 2500);
@@ -363,11 +364,8 @@
                 cart.push({ id: item.id, name: item['Product Name'], brand: item['Brand'], imageUrl: imageUrl, price: price, qty: qtyToAdd });
             }
 
-            // รีเซ็ตจำนวน
             qtyInput.value = 1;
             updateCartUI();
-
-            // --- เรียกใช้งานป๊อปอัปแจ้งเตือน ---
             showToast(`✅ เพิ่ม "${item['Product Name']}" ลงตะกร้าแล้ว`);
         }
 
@@ -447,7 +445,6 @@
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(orderData)
             }).then(() => {
-                // แจ้งเตือนเมื่อส่งออเดอร์สำเร็จ
                 showToast(`🎉 ส่งออเดอร์ของคุณ ${customerName} สำเร็จแล้ว!`);
                 cart = [];
                 customerNameInput.value = ""; 
