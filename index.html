@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="My Matcha">
     
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
     <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w512">
     <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w128">
     <link rel="shortcut icon" type="image/png" href="https://drive.google.com/thumbnail?id=1u5tlylqz3ybnar6sqhoUNY_VYlroalC4&sz=w128">
@@ -26,7 +28,6 @@
         .filter-select { padding: 10px 15px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; font-family: 'Kanit', sans-serif; outline: none; cursor: pointer; background-color: white;}
         .filter-select:hover { border-color: #2e5c23; }
 
-        /* --- สไตล์สำหรับ Dropdown ธงชาติแบบใหม่ --- */
         .currency-selector { position: relative; display: inline-block; width: 170px; font-family: 'Kanit', sans-serif; user-select: none;}
         .currency-display { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; background-color: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 1em; color: #333; transition: border-color 0.2s;}
         .currency-display:hover { border-color: #2e5c23; }
@@ -85,6 +86,19 @@
         }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
+        .status-container, .admin-container { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1000px; margin: 0 auto;}
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+        .search-input { flex-grow: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: 'Kanit', sans-serif; font-size: 1em; outline: none;}
+        .search-btn { background-color: #2e5c23; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-family: 'Kanit', sans-serif; font-weight: bold; font-size: 1em; cursor: pointer; transition: 0.2s;}
+        .search-btn:hover { background-color: #1b3815; }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.9em; font-weight: bold; color: #fff; background-color: #1565c0; display: inline-block; text-align: center;}
+
+        /* สไตล์สำหรับแอดมิน */
+        .admin-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; box-sizing: border-box; }
+        .btn-save { background-color: #1565c0; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Kanit', sans-serif; font-weight: bold; transition: 0.2s;}
+        .btn-save:hover { background-color: #0d47a1; }
+        .quick-btn { background: #eee; border: 1px solid #ccc; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-top: 5px; }
+
         @media (max-width: 768px) {
             .timeline-container::after { left: 20px; width: 20px; transform: none;}
             .timeline-center-dot { left: 20px; transform: translateX(2px); width: 12px; height: 12px; }
@@ -96,6 +110,7 @@
             #toast { min-width: 80%; bottom: 20px; }
             #toast.show { bottom: 40px; }
             .control-panel { flex-direction: column; gap: 10px; align-items: stretch; }
+            .search-box { flex-direction: column; }
         }
     </style>
 </head>
@@ -106,23 +121,33 @@
         <p style="text-align: center; color: #777; font-size: 0.95em; margin-top: -10px; margin-bottom: 25px;">
             🕒 อัปเดตข้อมูลและราคาล่าสุด: 16/04/2026
         </p>
+
+        <div id="user-profile" style="text-align: center; margin-bottom: 20px; height: 55px;">
+            <div id="profile-info" style="display: none; align-items: center; justify-content: center; gap: 10px;">
+                <img id="profile-img" src="" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #2e5c23; object-fit: cover;">
+                <span style="font-weight: bold; color: #2e5c23; font-size: 1.2em;">สวัสดีคุณ <span id="profile-name"></span></span>
+            </div>
+            <button id="liff-login-btn" onclick="liff.login()" style="display: none; background-color: #06C755; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Kanit', sans-serif; font-weight: bold; font-size: 1em; cursor: pointer; margin: 0 auto;">
+                เข้าสู่ระบบด้วย LINE เพื่อสั่งซื้อ
+            </button>
+        </div>
         
         <div class="nav-tabs">
             <button class="tab-btn active" id="tab-shop" onclick="switchTab('shop')">🛒 หน้าเลือกสินค้า</button>
-            <button class="tab-btn" id="tab-ranking" onclick="switchTab('ranking')">⭐ Ranking Matcha Guide</button>
+            <button class="tab-btn" id="tab-ranking" onclick="switchTab('ranking')">⭐ Ranking Guide</button>
+            <button class="tab-btn" id="tab-status" onclick="switchTab('status')">🔍 เช็คสถานะสินค้า</button>
+            <button class="tab-btn" id="tab-admin" onclick="switchTab('admin')" style="color: #b71c1c;">🛠️ ADMIN</button>
         </div>
 
-        <div class="control-panel">
-            <div class="filter-group">
+        <div class="control-panel" id="main-controls">
+            <div class="filter-group" id="brand-filter-group">
                 <label for="brandFilter" style="font-weight: bold; color: #2e5c23; font-size: 1.1em;">🏠 เลือกร้าน/แบรนด์:</label>
                 <select id="brandFilter" class="filter-select">
                     <option value="All">🍵 ทั้งหมด (All)</option>
                 </select>
             </div>
-            
             <div class="filter-group">
                 <label style="font-weight: bold; color: #b71c1c; font-size: 1.1em;">💰 แสดงราคา:</label>
-                
                 <div class="currency-selector" id="currencySelector">
                     <div class="currency-display" onclick="toggleCurrencyDropdown()">
                         <div class="currency-display-content" id="selectedCurrencyContent">
@@ -139,7 +164,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -151,7 +175,7 @@
                         <thead>
                             <tr>
                                 <th>สินค้าที่เลือก</th>
-                                <th style="text-align:center;">ราคาต่อหน่วย</th>
+                                <th style="text-align:center;">ราคา/หน่วย</th>
                                 <th style="text-align:center;">จำนวน</th>
                                 <th style="text-align:right;">รวม</th>
                                 <th style="text-align:center;">จัดการ</th>
@@ -164,73 +188,153 @@
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed #ccc;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
                         <div style="flex-grow: 1; max-width: 400px;">
-                            <label for="customer-name" style="font-weight: bold; color: #2e5c23; display: block; margin-bottom: 5px;">👤 ชื่อผู้สั่ง (ถ้ามี):</label>
-                            <input type="text" id="customer-name" placeholder="ระบุชื่อ (เว้นว่างได้)..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 1em; outline: none; box-sizing: border-box;">
+                            <label for="customer-name" style="font-weight: bold; color: #2e5c23; display: block; margin-bottom: 5px;">👤 ชื่อผู้สั่ง:</label>
+                            <input type="text" id="customer-name" placeholder="กรอกชื่อของคุณ..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; outline: none;">
                         </div>
                         <div style="text-align: right;">
                             <div class="cart-total" id="cart-total" style="border: none; margin: 0 0 10px 0; padding: 0;">ยอดรวมสุทธิ: 0</div>
-                            <button id="checkout-btn" onclick="sendOrderEmail()" style="background-color: #f57f17; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1.1em; font-family: 'Kanit', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <button id="checkout-btn" onclick="sendOrderEmail()" style="background-color: #f57f17; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1.1em; font-family: 'Kanit', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s;">
                                 ✅ ยืนยันรายการ & ส่งออเดอร์
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="grid" id="matcha-container">
-                <p style="text-align:center; width:100%;">กำลังโหลดข้อมูล...</p>
-            </div>
+            <div class="grid" id="matcha-container"><p style="text-align:center; width:100%;">กำลังโหลดข้อมูล...</p></div>
         </div>
 
         <div id="view-ranking" style="display: none;">
             <p style="text-align: center; color: #555; margin-bottom: 40px; margin-top: -15px;">เรียงลำดับมัทฉะจากเกรดพรีเมียมสูงสุด และราคาตามลำดับ</p>
             <div id="ranking-container"></div>
         </div>
+
+        <div id="view-status" style="display: none;">
+            <div class="status-container">
+                <h2 style="color: #2e5c23; margin-top: 0;">🔍 ตรวจสอบสถานะการหาของ</h2>
+                <div class="search-box">
+                    <input type="text" id="search-order-name" class="search-input" placeholder="พิมพ์ชื่อผู้สั่ง หรือ เลขที่ออเดอร์ เพื่อค้นหาเพิ่มเติม...">
+                    <button class="search-btn" onclick="checkStatus()" id="search-btn">ค้นหาประวัติ</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="cart-table" id="status-table" style="display:none; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>วันที่สั่ง / รหัส</th>
+                                <th>รายการสินค้า</th>
+                                <th style="text-align:center;">ราคา/หน่วย</th>
+                                <th style="text-align:center;">จำนวน</th>
+                                <th style="text-align:right;">รวม</th>
+                                <th style="text-align:center;">สถานะปัจจุบัน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="status-body"></tbody>
+                    </table>
+                </div>
+                <p id="status-msg" style="text-align:center; color:#b71c1c; margin-top:20px; display:none;"></p>
+            </div>
+        </div>
+
+        <div id="view-admin" style="display: none;">
+            <div class="admin-container">
+                <div id="admin-login-box" style="text-align: center; padding: 40px 0;">
+                    <h2 style="color: #b71c1c;">🔒 ระบบจัดการข้อมูล ADMIN</h2>
+                    <p>กรุณาใส่รหัสผ่านเพื่อเข้าสู่ระบบ</p>
+                    <input type="password" id="admin-pass" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-family: 'Kanit'; text-align: center;" placeholder="รหัสผ่าน">
+                    <button onclick="loginAdmin()" class="search-btn" style="background-color: #b71c1c;">เข้าสู่ระบบ</button>
+                </div>
+
+                <div id="admin-dashboard" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #1565c0; margin: 0;">🛠️ รายการออเดอร์ทั้งหมด</h2>
+                        <button onclick="fetchAdminData()" class="search-btn" style="background-color: #f57f17; padding: 8px 15px;">🔄 โหลดข้อมูลล่าสุด</button>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="cart-table" style="min-width: 800px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">วันที่ / รหัส</th>
+                                    <th style="width: 15%;">ชื่อลูกค้า</th>
+                                    <th style="width: 25%;">รายการสินค้า</th>
+                                    <th style="width: 10%; text-align:center;">จำนวนที่ได้</th>
+                                    <th style="width: 20%;">อัปเดตสถานะ</th>
+                                    <th style="width: 15%; text-align:center;">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-body">
+                                <tr><td colspan="6" style="text-align: center;">⏳ กำลังโหลดข้อมูลออเดอร์...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div id="toast">แจ้งเตือน</div>
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbyqTpO3AAjoWrNd3V1Frgy8Z5MbKtQC_gD2aWeytPAhfAdPMwbOMtYn8qd7B7HM50ZR/exec';
+        const LIFF_ID = "2009818831-5fiCjFHH"; // 🌟 ใส่ LIFF ID ที่นี่
 
         let allMatchaData = [];
         let cart = []; 
         let currentCurrency = 'JPY'; 
+        let currentStatusOrders = []; 
+        let lineProfile = null; // เก็บข้อมูลผู้ใช้ LINE
 
-        // ระบบเปิดปิด Dropdown ธงชาติ
-        function toggleCurrencyDropdown() {
-            document.getElementById("currencyOptions").classList.toggle("show");
+        // 🌟 เริ่มต้นระบบด้วย LIFF 
+        async function initializeApp() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    lineProfile = await liff.getProfile();
+                    
+                    // โชว์รูปโปรไฟล์
+                    document.getElementById('profile-info').style.display = 'flex';
+                    document.getElementById('profile-img').src = lineProfile.pictureUrl;
+                    document.getElementById('profile-name').innerText = lineProfile.displayName;
+                    
+                    // เติมชื่อลงในช่องสั่งซื้อให้อัตโนมัติ
+                    document.getElementById('customer-name').value = lineProfile.displayName;
+                } else {
+                    // ถ้ายังไม่ล็อกอิน ให้โชว์ปุ่ม Login
+                    document.getElementById('liff-login-btn').style.display = 'inline-block';
+                }
+            } catch (err) {
+                console.error('LIFF Init Error:', err);
+            }
+            // โหลดข้อมูลมัทฉะต่อ
+            fetchMatchaData();
         }
 
-        // ปิด Dropdown ถือคลิกพื้นที่ว่าง
+        function toggleCurrencyDropdown() { document.getElementById("currencyOptions").classList.toggle("show"); }
+
         window.onclick = function(event) {
           if (!event.target.closest('.currency-selector')) {
             var dropdowns = document.getElementsByClassName("currency-options");
             for (var i = 0; i < dropdowns.length; i++) {
-              var openDropdown = dropdowns[i];
-              if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
-              }
+              if (dropdowns[i].classList.contains('show')) { dropdowns[i].classList.remove('show'); }
             }
           }
         }
 
-        // เมื่อเลือกค่าเงินใหม่
         function selectCurrency(currencyCode, flagSrc, text) {
             document.getElementById("selectedCurrencyContent").innerHTML = `<img src="${flagSrc}" alt="${currencyCode}"> ${text}`;
             document.getElementById("currencyOptions").classList.remove("show");
-            
             currentCurrency = currencyCode;
+            
             const selectedBrand = document.getElementById('brandFilter').value;
             const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
+            displayData(filteredData); generateRankingView(filteredData); updateCartUI(); 
             
-            displayData(filteredData);
-            generateRankingView(filteredData);
-            updateCartUI(); 
+            if (currentStatusOrders.length > 0) { renderStatusTable(); }
         }
 
         async function fetchMatchaData() {
             try {
-                const cachedData = sessionStorage.getItem('matchaDataCacheV12');
+                const cachedData = sessionStorage.getItem('matchaDataCacheV21');
                 if (cachedData) {
                     allMatchaData = JSON.parse(cachedData);
                     allMatchaData.forEach((item, index) => item.id = index);
@@ -239,19 +343,29 @@
                     const response = await fetch(API_URL);
                     allMatchaData = await response.json();
                     allMatchaData.forEach((item, index) => item.id = index);
-                    sessionStorage.setItem('matchaDataCacheV12', JSON.stringify(allMatchaData));
+                    sessionStorage.setItem('matchaDataCacheV21', JSON.stringify(allMatchaData));
                     setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
                 }
-            } catch (error) {
-                document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%; color:red;">เกิดข้อผิดพลาด! กรุณาตรวจสอบ Google Apps Script</p>';
-            }
+            } catch (error) { document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%; color:red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>'; }
         }
 
         function switchTab(tabName) {
             document.getElementById('view-shop').style.display = tabName === 'shop' ? 'block' : 'none';
             document.getElementById('view-ranking').style.display = tabName === 'ranking' ? 'block' : 'none';
+            document.getElementById('view-status').style.display = tabName === 'status' ? 'block' : 'none';
+            document.getElementById('view-admin').style.display = tabName === 'admin' ? 'block' : 'none';
+            
             document.getElementById('tab-shop').className = tabName === 'shop' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-ranking').className = tabName === 'ranking' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-status').className = tabName === 'status' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-admin').className = tabName === 'admin' ? 'tab-btn active' : 'tab-btn';
+
+            document.getElementById('brand-filter-group').style.display = (tabName === 'status' || tabName === 'admin') ? 'none' : 'flex';
+
+            // 🌟 ค้นหาสถานะอัตโนมัติ ถ้าล็อกอิน LINE ไว้และกดมาที่แท็บสถานะครั้งแรก
+            if (tabName === 'status' && lineProfile && currentStatusOrders.length === 0) {
+                checkStatus();
+            }
         }
 
         function showToast(message) {
@@ -261,11 +375,8 @@
         }
 
         function getDisplayPrice(item) {
-            if (currentCurrency === 'THB') {
-                return item['Price_THB'] ? Number(item['Price_THB']).toLocaleString() + ' THB' : '-';
-            } else {
-                return item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() + ' JPY' : '-';
-            }
+            if (currentCurrency === 'THB') { return item['Price_THB'] ? Number(item['Price_THB']).toLocaleString() + ' THB' : '-'; } 
+            else { return item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() + ' JPY' : '-'; }
         }
 
         function generateRankingView(data) {
@@ -277,9 +388,7 @@
                 let brandItems = data.filter(item => item['Brand'] === brand);
                 brandItems.sort((a, b) => (Number(b['Rating']) || 0) - (Number(a['Rating']) || 0));
 
-                html += `<h2 class="brand-header">🏠 ${brand} Guide</h2>`;
-                html += `<div class="timeline-container">`;
-
+                html += `<h2 class="brand-header">🏠 ${brand} Guide</h2><div class="timeline-container">`;
                 brandItems.forEach((item, index) => {
                     if(!item['Product Name']) return;
                     const isLeft = index % 2 === 0; 
@@ -288,25 +397,8 @@
                     const detailText = item['Recommended2'] || item['Recommended'] || '';
                     const priceText = getDisplayPrice(item); 
 
-                    const cardHtml = `
-                        <div class="ranking-card">
-                            <img src="${imageUrl}" alt="${item['Product Name']}" loading="lazy">
-                            <div class="ranking-details">
-                                <h3>${item['Product Name']}</h3>
-                                ${ratingValue > 0 ? `<div class="ranking-rating">⭐ ${ratingValue.toFixed(1)}</div>` : ''}
-                                <p style="margin: 0; font-size: 0.85em; color: #666; line-height: 1.4;">${detailText}</p>
-                                <p style="margin: 5px 0 0 0; font-weight: bold; color: #b71c1c; font-size: 0.9em;">${priceText}</p>
-                            </div>
-                        </div>
-                    `;
-
-                    html += `
-                        <div class="timeline-row">
-                            <div class="timeline-left">${isLeft ? cardHtml : ''}</div>
-                            <div class="timeline-center-dot"></div>
-                            <div class="timeline-right">${!isLeft ? cardHtml : ''}</div>
-                        </div>
-                    `;
+                    const cardHtml = `<div class="ranking-card"><img src="${imageUrl}" loading="lazy"><div class="ranking-details"><h3>${item['Product Name']}</h3>${ratingValue > 0 ? `<div class="ranking-rating">⭐ ${ratingValue.toFixed(1)}</div>` : ''}<p style="margin: 0; font-size: 0.85em; color: #666; line-height: 1.4;">${detailText}</p><p style="margin: 5px 0 0 0; font-weight: bold; color: #b71c1c; font-size: 0.9em;">${priceText}</p></div></div>`;
+                    html += `<div class="timeline-row"><div class="timeline-left">${isLeft ? cardHtml : ''}</div><div class="timeline-center-dot"></div><div class="timeline-right">${!isLeft ? cardHtml : ''}</div></div>`;
                 });
                 html += `</div>`;
             });
@@ -324,7 +416,6 @@
             
             const newFilterSelect = filterSelect.cloneNode(true);
             filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
-            
             newFilterSelect.addEventListener('change', function(e) {
                 const selectedBrand = e.target.value;
                 const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
@@ -335,35 +426,21 @@
         function displayData(matchaList) {
             const container = document.getElementById('matcha-container');
             if (matchaList.length === 0) { container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะ</p>'; return; }
-            
             let html = '';
             matchaList.forEach(item => {
                 if(!item['Product Name']) return;
                 const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` : 'https://via.placeholder.com/300x200?text=No+Image';
                 const tasteHtml = item['Recommended2'] ? `<div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2']}</div>` : '';
                 const priceFormatted = getDisplayPrice(item); 
-                
                 const statusStr = item['Status'] ? String(item['Status']).trim().toLowerCase() : '';
                 const isOutOfStock = statusStr === 'หมด' || statusStr === 'out of stock' || statusStr === 'sold out';
                 const cardStyle = isOutOfStock ? 'opacity: 0.7; filter: grayscale(40%);' : '';
 
                 let actionHtml = isOutOfStock 
                     ? `<button class="add-btn out-of-stock-btn" disabled>❌ ของหมด</button>`
-                    : `<input type="number" id="qty-${item.id}" value="1" min="1" max="10" class="qty-input">
-                       <button onclick="addToCart(${item.id})" class="add-btn">➕ เพิ่มลงตะกร้า</button>`;
+                    : `<input type="number" id="qty-${item.id}" value="1" min="1" max="10" class="qty-input"><button onclick="addToCart(${item.id})" class="add-btn">➕ เพิ่มลงตะกร้า</button>`;
 
-                html += `
-                    <div class="card" style="${cardStyle}">
-                        <img src="${imageUrl}" alt="${item['Product Name']}" loading="lazy">
-                        <h3>${item['Product Name']}</h3>
-                        <p style="margin:0;"><strong>ร้าน:</strong> ${item['Brand']}</p>
-                        <p style="margin:5px 0;"><strong>น้ำหนัก:</strong> ${item['Weight']}</p>
-                        <span class="tag">${item['Recommended']}</span>
-                        ${tasteHtml}
-                        <p class="price">ราคา: ${priceFormatted}</p>
-                        <div class="add-row">${actionHtml}</div>
-                    </div>
-                `;
+                html += `<div class="card" style="${cardStyle}"><img src="${imageUrl}" loading="lazy"><h3>${item['Product Name']}</h3><p style="margin:0;"><strong>ร้าน:</strong> ${item['Brand']}</p><p style="margin:5px 0;"><strong>น้ำหนัก:</strong> ${item['Weight']}</p><span class="tag">${item['Recommended']}</span>${tasteHtml}<p class="price">ราคา: ${priceFormatted}</p><div class="add-row">${actionHtml}</div></div>`;
             });
             container.innerHTML = html;
         }
@@ -371,44 +448,29 @@
         function addToCart(itemId) {
             const item = allMatchaData.find(m => m.id === itemId);
             if (!item) return;
-
             const qtyInput = document.getElementById(`qty-${itemId}`);
             const qtyToAdd = parseInt(qtyInput.value) || 1;
             
-            const priceJPY = Number(item['Price_JPY']) || 0;
-            const priceTHB = Number(item['Price_THB']) || 0;
-
-            if (priceJPY === 0 && priceTHB === 0) {
-                alert('สินค้านี้ยังไม่มีราคา ไม่สามารถคำนวณได้ครับ'); return;
-            }
-            if (qtyToAdd > 10) {
-                alert(`ขออภัยครับ คุณสามารถเพิ่ม ${item['Product Name']} ได้สูงสุด 10 ชิ้นต่อครั้งครับ`);
-                qtyInput.value = 10; return;
-            }
+            const priceJPY = Number(item['Price_JPY']) || 0; const priceTHB = Number(item['Price_THB']) || 0;
+            if (priceJPY === 0 && priceTHB === 0) { alert('สินค้านี้ยังไม่มีราคา ไม่สามารถคำนวณได้ครับ'); return; }
+            if (qtyToAdd > 10) { alert(`เพิ่มได้สูงสุด 10 ชิ้นต่อครั้งครับ`); qtyInput.value = 10; return; }
 
             const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w100` : 'https://via.placeholder.com/100?text=No+Img';
             const existingItem = cart.find(c => c.id === itemId);
             
             if (existingItem) {
                 if (existingItem.qty + qtyToAdd > 10) {
-                    const remainingSlot = 10 - existingItem.qty;
-                    alert(`คุณมีสินค้านี้ในตะกร้าแล้ว ${existingItem.qty} ชิ้น\nสามารถเพิ่มได้อีกสูงสุดแค่ ${remainingSlot} ชิ้นครับ`);
-                    qtyInput.value = remainingSlot > 0 ? remainingSlot : 1; return;
+                    alert(`เพิ่มได้อีกสูงสุดแค่ ${10 - existingItem.qty} ชิ้นครับ`);
+                    qtyInput.value = (10 - existingItem.qty) > 0 ? (10 - existingItem.qty) : 1; return;
                 }
                 existingItem.qty += qtyToAdd;
             } else {
                 cart.push({ id: item.id, name: item['Product Name'], brand: item['Brand'], imageUrl: imageUrl, priceJPY: priceJPY, priceTHB: priceTHB, qty: qtyToAdd });
             }
-
-            qtyInput.value = 1;
-            updateCartUI();
-            showToast(`✅ เพิ่ม "${item['Product Name']}" ลงตะกร้าแล้ว`);
+            qtyInput.value = 1; updateCartUI(); showToast(`✅ เพิ่มลงตะกร้าแล้ว`);
         }
 
-        function removeFromCart(itemId) {
-            cart = cart.filter(c => c.id !== itemId);
-            updateCartUI();
-        }
+        function removeFromCart(itemId) { cart = cart.filter(c => c.id !== itemId); updateCartUI(); }
 
         function updateCartUI() {
             const cartSection = document.getElementById('cart-section');
@@ -416,84 +478,177 @@
             const cartTotal = document.getElementById('cart-total');
 
             if (cart.length === 0) { cartSection.style.display = 'none'; return; }
-
             cartSection.style.display = 'block';
-            let html = '';
-            let grandTotalJPY = 0;
-            let grandTotalTHB = 0;
-
+            
+            let html = ''; let grandTotalJPY = 0; let grandTotalTHB = 0;
             cart.forEach(item => {
-                const subtotalJPY = item.priceJPY * item.qty;
-                const subtotalTHB = item.priceTHB * item.qty;
-                grandTotalJPY += subtotalJPY;
-                grandTotalTHB += subtotalTHB;
-                
-                const displayPrice = currentCurrency === 'THB' ? item.priceTHB : item.priceJPY;
-                const displaySubtotal = currentCurrency === 'THB' ? subtotalTHB : subtotalJPY;
-                
-                html += `
-                    <tr>
-                        <td>
-                            <div class="cart-item-info">
-                                <img src="${item.imageUrl}" alt="${item.name}" class="cart-img" loading="lazy">
-                                <div class="cart-item-details">
-                                    <strong>${item.name}</strong><span class="cart-brand">🏠 ${item.brand}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td style="text-align:center;">${displayPrice.toLocaleString()}</td>
-                        <td style="text-align:center;">${item.qty}</td>
-                        <td style="text-align:right; font-weight:bold;">${displaySubtotal.toLocaleString()} ${currentCurrency}</td>
-                        <td style="text-align:center;"><button class="remove-btn" onclick="removeFromCart(${item.id})">ลบ</button></td>
-                    </tr>
-                `;
+                const subTTHB = item.priceTHB * item.qty; const subTJPY = item.priceJPY * item.qty;
+                grandTotalJPY += subTJPY; grandTotalTHB += subTTHB;
+                const dPrice = currentCurrency === 'THB' ? item.priceTHB : item.priceJPY;
+                const dSub = currentCurrency === 'THB' ? subTTHB : subTJPY;
+                html += `<tr><td><div class="cart-item-info"><img src="${item.imageUrl}" class="cart-img"><div><strong>${item.name}</strong><br><span style="font-size:0.8em;">🏠 ${item.brand}</span></div></div></td><td style="text-align:center;">${dPrice.toLocaleString()}</td><td style="text-align:center;">${item.qty}</td><td style="text-align:right; font-weight:bold;">${dSub.toLocaleString()} ${currentCurrency}</td><td style="text-align:center;"><button class="remove-btn" onclick="removeFromCart(${item.id})">ลบ</button></td></tr>`;
             });
             cartBody.innerHTML = html;
-            
-            const finalTotalDisplay = currentCurrency === 'THB' ? grandTotalTHB : grandTotalJPY;
-            cartTotal.innerHTML = `ยอดรวมสุทธิ: ${finalTotalDisplay.toLocaleString()} ${currentCurrency}`;
+            const finalDisplay = currentCurrency === 'THB' ? grandTotalTHB : grandTotalJPY;
+            cartTotal.innerHTML = `ยอดรวมสุทธิ: ${finalDisplay.toLocaleString()} ${currentCurrency}`;
         }
 
         function sendOrderEmail() {
-            if (cart.length === 0) { alert("ไม่มีสินค้าในตะกร้าครับ"); return; }
-            const customerNameInput = document.getElementById('customer-name');
-            const customerName = customerNameInput.value.trim();
-            if (!customerName) { alert("กรุณากรอก 'ชื่อผู้สั่ง' ก่อนกดยืนยันรายการครับ 🍵"); customerNameInput.focus(); return; }
+            if (cart.length === 0) return;
+            const cusName = document.getElementById('customer-name').value.trim();
+            if (!cusName) { alert("กรุณากรอกชื่อผู้สั่งก่อนครับ"); document.getElementById('customer-name').focus(); return; }
 
-            let grandTotalJPY = 0;
-            let grandTotalTHB = 0;
-            cart.forEach(item => { 
-                grandTotalJPY += item.priceJPY * item.qty; 
-                grandTotalTHB += item.priceTHB * item.qty;
-            });
+            const d = new Date();
+            const orderId = `ORD-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${Math.floor(1000+Math.random()*9000)}`;
 
-            const orderData = {
-                customerName: customerName,
-                cart: cart,
-                totalJPY: grandTotalJPY,
-                totalTHB: grandTotalTHB
+            let gtJPY = 0; let gtTHB = 0;
+            cart.forEach(item => { gtJPY += item.priceJPY * item.qty; gtTHB += item.priceTHB * item.qty; });
+
+            // 🌟 ส่งข้อมูล LINE ID ไปเก็บใน Sheet ด้วย
+            const lineUid = lineProfile ? lineProfile.userId : "";
+
+            const orderData = { 
+                customerName: cusName, 
+                orderId: orderId, 
+                lineUserId: lineUid,
+                cart: cart, 
+                totalJPY: gtJPY, 
+                totalTHB: gtTHB 
             };
+            
+            const btn = document.getElementById('checkout-btn');
+            btn.innerText = "⏳ กำลังส่งข้อมูล..."; btn.style.backgroundColor = "#9e9e9e"; btn.disabled = true;
 
-            const checkoutBtn = document.getElementById('checkout-btn');
-            checkoutBtn.innerText = "⏳ กำลังส่งข้อมูล...";
-            checkoutBtn.style.backgroundColor = "#9e9e9e"; checkoutBtn.disabled = true;
-
-            fetch(API_URL, {
-                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(orderData)
-            }).then(() => {
-                showToast(`🎉 ส่งออเดอร์ของคุณ ${customerName} สำเร็จแล้ว!`);
-                cart = []; customerNameInput.value = ""; updateCartUI();
-                checkoutBtn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์";
-                checkoutBtn.style.backgroundColor = "#f57f17"; checkoutBtn.disabled = false;
-            }).catch((error) => {
-                alert("เกิดข้อผิดพลาดในการส่งข้อมูลครับ");
-                checkoutBtn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์";
-                checkoutBtn.style.backgroundColor = "#f57f17"; checkoutBtn.disabled = false;
+            fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(orderData) })
+            .then(() => {
+                alert(`🎉 สั่งซื้อสำเร็จ!\nชื่อ: ${cusName}\nเลขออเดอร์: ${orderId}\n*กรุณาแคปหน้าจอเก็บไว้เช็คสถานะนะครับ`);
+                cart = []; 
+                // รีเซ็ตชื่อกลับเป็นชื่อ LINE ถ้ามี
+                document.getElementById('customer-name').value = lineProfile ? lineProfile.displayName : ""; 
+                updateCartUI();
+                btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.style.backgroundColor = "#f57f17"; btn.disabled = false;
+            }).catch(() => {
+                alert("เกิดข้อผิดพลาดในการส่ง");
+                btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.style.backgroundColor = "#f57f17"; btn.disabled = false;
             });
         }
 
-        fetchMatchaData();
+        // --- ส่วนของลูกค้า (เช็คสถานะ) ---
+        async function checkStatus() {
+            const nameInput = document.getElementById('search-order-name').value.trim();
+            const lineUid = lineProfile ? lineProfile.userId : "";
+            
+            // ถ้าไม่กรอกชื่อ และ ไม่ได้ล็อกอิน LINE
+            if (!nameInput && !lineUid) { 
+                alert('กรุณากรอกชื่อผู้สั่ง หรือ ล็อกอิน LINE ก่อนครับ'); 
+                return; 
+            }
+            
+            const btn = document.getElementById('search-btn'); const table = document.getElementById('status-table'); const msg = document.getElementById('status-msg');
+            btn.innerText = '⏳ ค้นหา...'; btn.disabled = true; table.style.display = 'none'; msg.style.display = 'none';
+
+            try {
+                // 🌟 ส่งไปทั้งคำค้นหา และ LINE ID
+                const url = `${API_URL}?action=checkStatus&name=${encodeURIComponent(nameInput)}&uid=${encodeURIComponent(lineUid)}`;
+                const res = await fetch(url);
+                currentStatusOrders = await res.json(); 
+                
+                if (currentStatusOrders.length === 0) { 
+                    msg.innerText = `❌ ไม่พบประวัติการสั่งซื้อครับ (ลองค้นหาด้วยรหัส Order ID)`; 
+                    msg.style.display = 'block'; 
+                } else { 
+                    renderStatusTable(); 
+                }
+            } catch (error) { 
+                msg.innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล'; 
+                msg.style.display = 'block'; 
+            }
+            btn.innerText = 'ค้นหาประวัติ'; btn.disabled = false;
+        }
+
+        function renderStatusTable() {
+            const tbody = document.getElementById('status-body'); let html = ''; let gtStatus = 0;
+            currentStatusOrders.forEach(order => {
+                let sColor = '#f57f17'; let isOut = false;
+                if(order.status.includes('หมด') || order.status.includes('ไม่ได้') || order.status.includes('ขาด')){ sColor = '#e53935'; isOut = true; }
+                if(order.status.includes('ได้') || order.status.includes('จัดส่ง') || order.status.includes('ครบ')){ sColor = '#2e7d32'; }
+
+                const pUnit = currentCurrency === 'THB' ? order.priceTHB : order.priceJPY;
+                const pTotal = currentCurrency === 'THB' ? order.subTotalTHB : order.subTotalJPY;
+                if (!isOut) { gtStatus += Number(pTotal); }
+
+                let fImg = order.imageUrl;
+                if (fImg && fImg.includes("drive.google.com")) {
+                    const idM = fImg.match(/id=([^&]+)/); if (idM) { fImg = `https://drive.google.com/thumbnail?id=${idM[1]}&sz=w100`; }
+                }
+                const dStyle = isOut ? "text-decoration: line-through; color: #aaa;" : "color: #b71c1c; font-weight: bold;";
+                const rStyle = isOut ? "background-color: #fafafa; opacity: 0.8;" : "";
+
+                html += `<tr style="${rStyle}"><td style="font-size:0.85em; color:#666;">${order.date}<br><span style="color:#1565c0; font-weight:bold;">${order.orderId}</span></td><td><div style="display:flex; align-items:center; gap:12px;"><img src="${fImg}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;"><div><strong style="color:#333;">${order.name}</strong></div></div></td><td style="text-align:center;">${Number(pUnit).toLocaleString()}</td><td style="text-align:center;">${order.qty}</td><td style="text-align:right; ${dStyle}">${Number(pTotal).toLocaleString()}</td><td style="text-align:center;"><span class="status-badge" style="background-color: ${sColor};">${order.status}</span></td></tr>`;
+            });
+            html += `<tr style="background-color: #f4f6f5; border-top: 2px solid #2e5c23;"><td colspan="4" style="text-align:right; font-weight:bold; color:#2e5c23; padding:15px;">ยอดรวมที่หาได้:</td><td colspan="2" style="text-align:left; font-weight:bold; font-size:1.2em; color:#b71c1c; padding:15px;">${gtStatus.toLocaleString()} ${currentCurrency}</td></tr>`;
+            tbody.innerHTML = html; document.getElementById('status-table').style.display = 'table';
+        }
+
+        // ==========================================
+        // 🌟 ส่วนของ แอดมิน (จัดการออเดอร์)
+        // ==========================================
+        function loginAdmin() {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === '0640425461') {
+                document.getElementById('admin-login-box').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                fetchAdminData();
+            } else { alert('รหัสผ่านไม่ถูกต้องครับ'); }
+        }
+
+        function setStatusText(rowId, text) { document.getElementById(`admin-status-${rowId}`).value = text; }
+
+        async function fetchAdminData() {
+            const tbody = document.getElementById('admin-body');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">⏳ กำลังโหลดข้อมูลออเดอร์...</td></tr>';
+            try {
+                const res = await fetch(`${API_URL}?action=adminFetch`);
+                const orders = await res.json();
+                
+                if (orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">ไม่มีข้อมูลออเดอร์</td></tr>';
+                } else {
+                    let html = '';
+                    orders.forEach(order => {
+                        let fImg = order.imageUrl;
+                        if (fImg && fImg.includes("drive.google.com")) {
+                            const idM = fImg.match(/id=([^&]+)/); 
+                            if (idM) { fImg = `https://drive.google.com/thumbnail?id=${idM[1]}&sz=w100`; }
+                        }
+                        html += `<tr style="border-bottom: 1px solid #eee;"><td style="font-size:0.85em; color:#666;">${order.date}<br><strong style="color:#1565c0;">${order.orderId}</strong></td><td><strong>${order.name}</strong></td><td><div style="display:flex; align-items:center; gap:10px;"><img src="${fImg}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #ddd; flex-shrink:0;"><span>${order.itemName}</span></div></td><td style="text-align:center;"><input type="number" id="admin-qty-${order.row}" value="${order.qty}" class="admin-input" style="text-align:center;"></td><td><input type="text" id="admin-status-${order.row}" value="${order.status}" class="admin-input" placeholder="พิมพ์สถานะ..."><div style="margin-top: 5px;"><button class="quick-btn" onclick="setStatusText(${order.row}, '✅ ได้ครบ')">✅ ได้ครบ</button> <button class="quick-btn" onclick="setStatusText(${order.row}, '⚠️ ได้บางส่วน')">⚠️ บางส่วน</button> <button class="quick-btn" onclick="setStatusText(${order.row}, '❌ ของหมด')">❌ หมด</button></div></td><td style="text-align:center;"><button id="btn-save-${order.row}" class="btn-save" onclick="saveAdminRow(${order.row})">💾 บันทึก</button></td></tr>`;
+                    });
+                    tbody.innerHTML = html;
+                }
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">เกิดข้อผิดพลาดในการโหลด</td></tr>'; }
+        }
+
+        function saveAdminRow(row) {
+            const newQty = document.getElementById(`admin-qty-${row}`).value;
+            const newStatus = document.getElementById(`admin-status-${row}`).value;
+            const btn = document.getElementById(`btn-save-${row}`);
+            
+            btn.innerText = "⏳..."; btn.disabled = true; btn.style.backgroundColor = "#9e9e9e";
+
+            const payload = { action: 'updateStatusAdmin', row: row, qty: newQty, status: newStatus };
+
+            fetch(API_URL, {
+                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
+            }).then(() => {
+                btn.innerText = "✅ เสร็จ"; btn.style.backgroundColor = "#2e7d32"; showToast("บันทึกข้อมูลเรียบร้อย!");
+                setTimeout(() => { btn.innerText = "💾 บันทึก"; btn.style.backgroundColor = "#1565c0"; btn.disabled = false; }, 2000);
+            }).catch(() => {
+                alert("บันทึกไม่สำเร็จ ลองอีกครั้ง"); btn.innerText = "💾 บันทึก"; btn.style.backgroundColor = "#1565c0"; btn.disabled = false;
+            });
+        }
+
+        // 🌟 เรียกใช้ระบบ
+        initializeApp();
     </script>
 </body>
 </html>
