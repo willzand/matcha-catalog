@@ -276,36 +276,31 @@
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbyqTpO3AAjoWrNd3V1Frgy8Z5MbKtQC_gD2aWeytPAhfAdPMwbOMtYn8qd7B7HM50ZR/exec';
-        const LIFF_ID = "2009818831-5fiCjFHH"; // 🌟 ใส่ LIFF ID ที่นี่
+        const LIFF_ID = "2009818831-5fiCjFHH"; 
 
         let allMatchaData = [];
         let cart = []; 
         let currentCurrency = 'JPY'; 
         let currentStatusOrders = []; 
-        let lineProfile = null; // เก็บข้อมูลผู้ใช้ LINE
+        let lineProfile = null; 
 
-        // 🌟 เริ่มต้นระบบด้วย LIFF 
         async function initializeApp() {
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (liff.isLoggedIn()) {
                     lineProfile = await liff.getProfile();
                     
-                    // โชว์รูปโปรไฟล์
                     document.getElementById('profile-info').style.display = 'flex';
                     document.getElementById('profile-img').src = lineProfile.pictureUrl;
                     document.getElementById('profile-name').innerText = lineProfile.displayName;
                     
-                    // เติมชื่อลงในช่องสั่งซื้อให้อัตโนมัติ
                     document.getElementById('customer-name').value = lineProfile.displayName;
                 } else {
-                    // ถ้ายังไม่ล็อกอิน ให้โชว์ปุ่ม Login
                     document.getElementById('liff-login-btn').style.display = 'inline-block';
                 }
             } catch (err) {
                 console.error('LIFF Init Error:', err);
             }
-            // โหลดข้อมูลมัทฉะต่อ
             fetchMatchaData();
         }
 
@@ -334,7 +329,7 @@
 
         async function fetchMatchaData() {
             try {
-                const cachedData = sessionStorage.getItem('matchaDataCacheV21');
+                const cachedData = sessionStorage.getItem('matchaDataCacheV22');
                 if (cachedData) {
                     allMatchaData = JSON.parse(cachedData);
                     allMatchaData.forEach((item, index) => item.id = index);
@@ -343,7 +338,7 @@
                     const response = await fetch(API_URL);
                     allMatchaData = await response.json();
                     allMatchaData.forEach((item, index) => item.id = index);
-                    sessionStorage.setItem('matchaDataCacheV21', JSON.stringify(allMatchaData));
+                    sessionStorage.setItem('matchaDataCacheV22', JSON.stringify(allMatchaData));
                     setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
                 }
             } catch (error) { document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%; color:red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>'; }
@@ -362,8 +357,8 @@
 
             document.getElementById('brand-filter-group').style.display = (tabName === 'status' || tabName === 'admin') ? 'none' : 'flex';
 
-            // 🌟 ค้นหาสถานะอัตโนมัติ ถ้าล็อกอิน LINE ไว้และกดมาที่แท็บสถานะครั้งแรก
-            if (tabName === 'status' && lineProfile && currentStatusOrders.length === 0) {
+            // 🌟 แก้ไขตรงนี้: สั่งให้ดึงข้อมูลใหม่ "ทุกครั้ง" ที่กดเข้าแท็บเช็คสถานะ (ถ้าล็อกอิน LINE แล้ว)
+            if (tabName === 'status' && lineProfile) {
                 checkStatus();
             }
         }
@@ -504,7 +499,6 @@
             let gtJPY = 0; let gtTHB = 0;
             cart.forEach(item => { gtJPY += item.priceJPY * item.qty; gtTHB += item.priceTHB * item.qty; });
 
-            // 🌟 ส่งข้อมูล LINE ID ไปเก็บใน Sheet ด้วย
             const lineUid = lineProfile ? lineProfile.userId : "";
 
             const orderData = { 
@@ -523,7 +517,6 @@
             .then(() => {
                 alert(`🎉 สั่งซื้อสำเร็จ!\nชื่อ: ${cusName}\nเลขออเดอร์: ${orderId}\n*กรุณาแคปหน้าจอเก็บไว้เช็คสถานะนะครับ`);
                 cart = []; 
-                // รีเซ็ตชื่อกลับเป็นชื่อ LINE ถ้ามี
                 document.getElementById('customer-name').value = lineProfile ? lineProfile.displayName : ""; 
                 updateCartUI();
                 btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.style.backgroundColor = "#f57f17"; btn.disabled = false;
@@ -538,17 +531,15 @@
             const nameInput = document.getElementById('search-order-name').value.trim();
             const lineUid = lineProfile ? lineProfile.userId : "";
             
-            // ถ้าไม่กรอกชื่อ และ ไม่ได้ล็อกอิน LINE
             if (!nameInput && !lineUid) { 
                 alert('กรุณากรอกชื่อผู้สั่ง หรือ ล็อกอิน LINE ก่อนครับ'); 
                 return; 
             }
             
             const btn = document.getElementById('search-btn'); const table = document.getElementById('status-table'); const msg = document.getElementById('status-msg');
-            btn.innerText = '⏳ ค้นหา...'; btn.disabled = true; table.style.display = 'none'; msg.style.display = 'none';
+            btn.innerText = '⏳ กำลังอัปเดตข้อมูล...'; btn.disabled = true; table.style.display = 'none'; msg.style.display = 'none';
 
             try {
-                // 🌟 ส่งไปทั้งคำค้นหา และ LINE ID
                 const url = `${API_URL}?action=checkStatus&name=${encodeURIComponent(nameInput)}&uid=${encodeURIComponent(lineUid)}`;
                 const res = await fetch(url);
                 currentStatusOrders = await res.json(); 
