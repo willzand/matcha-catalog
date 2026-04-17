@@ -672,28 +672,71 @@
         function setStatusText(rowId, text) { document.getElementById(`admin-status-${rowId}`).value = text; }
 
         async function fetchAdminData() {
-            const tbody = document.getElementById('admin-body');
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">⏳ กำลังโหลดข้อมูลออเดอร์...</td></tr>';
-            try {
-                const res = await fetch(`${API_URL}?action=adminFetch`);
-                const orders = await res.json();
-                
-                if (orders.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">ไม่มีข้อมูลออเดอร์</td></tr>';
-                } else {
-                    let html = '';
-                    orders.forEach(order => {
-                        let fImg = order.imageUrl;
-                        if (fImg && fImg.includes("drive.google.com")) {
-                            const idM = fImg.match(/id=([^&]+)/); 
-                            if (idM) { fImg = `https://drive.google.com/thumbnail?id=${idM[1]}&sz=w100`; }
-                        }
-                        html += `<tr style="border-bottom: 1px solid #eee;"><td style="font-size:0.85em; color:#666;">${order.date}<br><strong style="color:#1565c0;">${order.orderId}</strong></td><td><strong>${order.name}</strong></td><td><div style="display:flex; align-items:center; gap:10px;"><img src="${fImg}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #ddd; flex-shrink:0;"><span>${order.itemName}</span></div></td><td style="text-align:center;"><input type="number" id="admin-qty-${order.row}" value="${order.qty}" class="admin-input" style="text-align:center;"></td><td><input type="text" id="admin-status-${order.row}" value="${order.status}" class="admin-input" placeholder="พิมพ์สถานะ..."><div style="margin-top: 5px;"><button class="quick-btn" onclick="setStatusText(${order.row}, '✅ ได้ครบ')">✅ ได้ครบ</button> <button class="quick-btn" onclick="setStatusText(${order.row}, '⚠️ ได้บางส่วน')">⚠️ บางส่วน</button> <button class="quick-btn" onclick="setStatusText(${order.row}, '❌ ของหมด')">❌ หมด</button></div></td><td style="text-align:center;"><button id="btn-save-${order.row}" class="btn-save" onclick="saveAdminRow(${order.row})">💾 บันทึก</button></td></tr>`;
-                    });
-                    tbody.innerHTML = html;
-                }
-            } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">เกิดข้อผิดพลาดในการโหลด</td></tr>'; }
+    const tbody = document.getElementById('admin-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+    try {
+        const response = await fetch(`${API_URL}?action=adminFetch`);
+        const data = await response.json();
+        
+        // จัดกลุ่มตาม Order ID
+        const grouped = data.reduce((acc, item) => {
+            if (!acc[item.orderId]) acc[item.orderId] = [];
+            acc[item.orderId].push(item);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const orderId in grouped) {
+            const items = grouped[orderId];
+            const firstItem = items[0];
+            
+            // สร้างหัวข้อกลุ่ม (Order ID) และปุ่มส่ง LINE รวม
+            html += `<tr style="background-color: #f0f4f0; font-weight: bold; border-left: 5px solid #2e7d32;">
+                        <td colspan="3" style="padding: 12px;">
+                            📦 <b>Order ID: ${orderId}</b><br>
+                            <small>👤 ${firstItem.name} | 📅 ${firstItem.date}</small>
+                        </td>
+                        <td colspan="1" style="text-align: right; padding: 12px;">
+                            <button onclick="sendGroupLineUpdate('${orderId}')" style="background-color: #00b900; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                                📲 ส่ง LINE อัปเดต
+                            </button>
+                        </td>
+                     </tr>`;
+
+            items.forEach(item => {
+                html += `<tr>
+                    <td style="padding-left: 20px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${item.imageUrl}" style="width:35px; height:35px; border-radius:4px;">
+                            <span>${item.itemName}</span>
+                        </div>
+                    </td>
+                    <td><input type="number" id="admin-qty-${item.row}" value="${item.qty}" style="width: 45px; text-align:center;"></td>
+                    <td>
+                        <select id="admin-status-${item.row}">
+                            <option value="⏳ กำลังตามหา" ${item.status === '⏳ กำลังตามหา' ? 'selected' : ''}>⏳ กำลังตามหา</option>
+                            <option value="✅ ได้ของแล้ว" ${item.status === '✅ ได้ของแล้ว' ? 'selected' : ''}>✅ ได้ของแล้ว</option>
+                            <option value="❌ ของหมด" ${item.status === '❌ ของหมด' ? 'selected' : ''}>❌ ของหมด</option>
+                        </select>
+                    </td>
+                    <td><button id="btn-save-${item.row}" onclick="saveAdminRow(${item.row})" style="background-color: #1565c0; color: white; border: none; padding: 6px 10px; border-radius: 4px;">💾 บันทึก</button></td>
+                </tr>`;
+            });
         }
+        tbody.innerHTML = html;
+    } catch(e) { console.error(e); }
+}
+
+// เพิ่มฟังก์ชันใหม่สำหรับปุ่มเขียว
+async function sendGroupLineUpdate(orderId) {
+    if(!confirm("ส่ง LINE อัปเดตสถานะให้ลูกค้าใช่ไหม?")) return;
+    showToast("กำลังส่ง...");
+    await fetch(API_URL, {
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'sendGroupLineUpdate', orderId: orderId })
+    });
+    showToast("ส่งสำเร็จ! ✅");
+}
 
         function saveAdminRow(row) {
             const newQty = document.getElementById(`admin-qty-${row}`).value;
