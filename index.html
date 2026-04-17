@@ -93,10 +93,8 @@
         .search-btn:hover { background-color: #1b3815; }
         .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.9em; font-weight: bold; color: #fff; background-color: #1565c0; display: inline-block; text-align: center;}
 
-        /* สไตล์สำหรับแอดมิน */
-        .admin-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit', sans-serif; box-sizing: border-box; }
-        .btn-save { background-color: #1565c0; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Kanit', sans-serif; font-weight: bold; transition: 0.2s;}
-        .btn-save:hover { background-color: #0d47a1; }
+        .admin-input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; }
+        .btn-save { background-color: #1565c0; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s;}
         .quick-btn { background: #eee; border: 1px solid #ccc; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-top: 5px; }
 
         @media (max-width: 768px) {
@@ -119,7 +117,7 @@
     <div class="container-main">
         <h1 style="text-align: center; color: #2e5c23; margin-top: 20px;">🍵 Matcha Catalog By TomS Tanawat</h1>
         <p style="text-align: center; color: #777; font-size: 0.95em; margin-top: -10px; margin-bottom: 25px;">
-            🕒 อัปเดตข้อมูลและราคาล่าสุด: 16/04/2026
+            🕒 อัปเดตข้อมูลและราคาล่าสุด: 17/04/2026
         </p>
 
         <div id="user-profile" style="text-align: center; margin-bottom: 20px; height: 55px;">
@@ -250,7 +248,7 @@
                     </div>
                     
                     <div style="overflow-x: auto;">
-                        <table class="cart-table" style="min-width: 800px;">
+                        <table class="cart-table" id="admin-table" style="min-width: 800px;">
                             <thead>
                                 <tr>
                                     <th style="width: 15%;">วันที่ / รหัส</th>
@@ -289,19 +287,193 @@
                 await liff.init({ liffId: LIFF_ID });
                 if (liff.isLoggedIn()) {
                     lineProfile = await liff.getProfile();
-                    
                     document.getElementById('profile-info').style.display = 'flex';
                     document.getElementById('profile-img').src = lineProfile.pictureUrl;
                     document.getElementById('profile-name').innerText = lineProfile.displayName;
-                    
                     document.getElementById('customer-name').value = lineProfile.displayName;
                 } else {
                     document.getElementById('liff-login-btn').style.display = 'inline-block';
                 }
-            } catch (err) {
-                console.error('LIFF Init Error:', err);
-            }
+            } catch (err) { console.error('LIFF Init Error:', err); }
             fetchMatchaData();
+        }
+
+        // --- ส่วนแสดงผลหน้า Admin แบบจัดกลุ่มตาม Order ID ---
+        async function fetchAdminData() {
+            const tbody = document.getElementById('admin-body');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+            try {
+                const response = await fetch(`${API_URL}?action=adminFetch`);
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">❌ ไม่พบข้อมูลออเดอร์</td></tr>';
+                    return;
+                }
+
+                // จัดกลุ่มตาม Order ID
+                const grouped = data.reduce((acc, item) => {
+                    if (!acc[item.orderId]) acc[item.orderId] = [];
+                    acc[item.orderId].push(item);
+                    return acc;
+                }, {});
+
+                let html = '';
+                for (const orderId in grouped) {
+                    const items = grouped[orderId];
+                    const firstItem = items[0];
+                    
+                    // หัวข้อกลุ่ม Order ID และปุ่มส่ง LINE อัปเดตทั้งบิล
+                    html += `<tr style="background-color: #f1f8e9; font-weight: bold; border-left: 5px solid #4caf50;">
+                                <td colspan="3" style="padding: 12px;">
+                                    📦 <b>Order ID: ${orderId}</b><br>
+                                    <small style="color:#555;">👤 ${firstItem.name} | 📅 ${firstItem.date}</small>
+                                </td>
+                                <td colspan="3" style="text-align: right; padding: 12px;">
+                                    <button onclick="sendGroupLineUpdate('${orderId}')" style="background-color: #00b900; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family:'Kanit';">
+                                        📲 ส่ง LINE อัปเดตทั้ง Order
+                                    </button>
+                                </td>
+                             </tr>`;
+
+                    items.forEach(item => {
+                        html += `<tr>
+                            <td style="padding-left: 20px; font-size:0.85em; color:#666;">↳ ข้อมูลออเดอร์</td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <img src="${item.imageUrl}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid #ddd;">
+                                    <span>${item.itemName}</span>
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                <input type="number" id="admin-qty-${item.row}" value="${item.qty}" style="width: 50px; text-align:center;" class="admin-input">
+                            </td>
+                            <td>
+                                <input type="text" id="admin-status-${item.row}" value="${item.status}" class="admin-input" placeholder="พิมพ์สถานะ...">
+                                <div style="margin-top: 5px;">
+                                    <button class="quick-btn" onclick="setStatusText(${item.row}, '✅ ได้ของแล้ว')">✅ ได้แล้ว</button> 
+                                    <button class="quick-btn" onclick="setStatusText(${item.row}, '❌ ของหมด')">❌ หมด</button>
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                <button id="btn-save-${item.row}" class="btn-save" onclick="saveAdminRow(${item.row})" style="background-color:#1565c0; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">💾 บันทึก</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                tbody.innerHTML = html;
+            } catch(e) { 
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">เกิดข้อผิดพลาดในการโหลด</td></tr>'; 
+            }
+        }
+
+        // บันทึกสถานะทีละแถว (ไม่ส่ง LINE)
+        async function saveAdminRow(row) {
+            const qty = document.getElementById(`admin-qty-${row}`).value;
+            const status = document.getElementById(`admin-status-${row}`).value;
+            const btn = document.getElementById(`btn-save-${row}`);
+            
+            btn.innerText = "⏳"; btn.disabled = true;
+
+            const payload = { action: 'updateStatusAdmin', row: row, qty: qty, status: status };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
+                });
+                showToast("✅ บันทึกข้อมูลแล้ว (ยังไม่ส่ง LINE)");
+                btn.innerText = "💾 บันทึก"; btn.disabled = false;
+            } catch (e) {
+                alert("บันทึกไม่สำเร็จ");
+                btn.innerText = "💾 บันทึก"; btn.disabled = false;
+            }
+        }
+
+        // ส่ง LINE แจ้งเตือนลูกค้าแบบรวมทั้ง Order ID
+        async function sendGroupLineUpdate(orderId) {
+            if (!confirm(`ยืนยันการส่ง LINE อัปเดตสถานะทุกรายการของ Order: ${orderId} ใช่หรือไม่?`)) return;
+            
+            showToast("⏳ กำลังส่ง LINE...");
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: 'sendGroupLineUpdate', orderId: orderId })
+                });
+                showToast("✅ ส่ง LINE อัปเดตออเดอร์เรียบร้อย!");
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการส่ง LINE");
+            }
+        }
+
+        function setStatusText(row, text) { document.getElementById(`admin-status-${row}`).value = text; }
+
+        // --- ส่วนแสดงตารางเช็คสถานะสินค้าสำหรับลูกค้า ---
+        function renderStatusTable() {
+            const table = document.getElementById('status-table');
+            const tbody = document.getElementById('status-body');
+            const msg = document.getElementById('status-msg');
+            
+            if (currentStatusOrders.length === 0) { 
+                table.style.display = 'none'; 
+                msg.innerText = "❌ ไม่พบข้อมูลการสั่งซื้อ";
+                msg.style.display = 'block';
+                return; 
+            }
+            
+            msg.style.display = 'none';
+            table.style.display = 'table';
+            
+            let html = '';
+            let lastId = '';
+            let rowColor = '#ffffff';
+
+            currentStatusOrders.forEach(order => {
+                if (order.orderId !== lastId) {
+                    rowColor = (rowColor === '#ffffff') ? '#f9f9f9' : '#ffffff';
+                    lastId = order.orderId;
+                }
+
+                const pUnit = currentCurrency === 'THB' ? order.priceTHB : order.priceJPY;
+                const pTotal = currentCurrency === 'THB' ? order.subTotalTHB : order.subTotalJPY;
+                
+                html += `<tr style="background-color: ${rowColor}; border-bottom: 1px solid #eee;">
+                    <td><b>${order.orderId}</b><br><small>${order.date}</small></td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <img src="${order.imageUrl}" style="width:45px; height:45px; object-fit:cover; border-radius:8px; border:1px solid #ddd;">
+                            <div>
+                                <strong>${order.itemName}</strong><br>
+                                <small style="color:#777;">🏠 ${order.brand}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align:center;">${Number(pUnit).toLocaleString()}</td>
+                    <td style="text-align:center;">${order.qty}</td>
+                    <td style="text-align:right; font-weight:bold; color:#b71c1c;">${Number(pTotal).toLocaleString()}</td>
+                    <td style="text-align:center;"><span class="status-badge">${order.status}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function checkStatus() {
+            const nameInput = document.getElementById('search-order-name').value.trim();
+            const lineUid = lineProfile ? lineProfile.userId : "";
+            const btn = document.getElementById('search-btn');
+            
+            if (!nameInput && !lineUid) { alert("กรุณาระบุชื่อหรือล็อกอินก่อนค้นหาครับ"); return; }
+            
+            btn.innerText = '⏳ กำลังค้นหา...'; btn.disabled = true;
+            try {
+                const res = await fetch(`${API_URL}?action=checkStatus&name=${encodeURIComponent(nameInput)}&uid=${encodeURIComponent(lineUid)}`);
+                currentStatusOrders = await res.json();
+                renderStatusTable();
+            } catch (e) { console.error(e); }
+            btn.innerText = 'ค้นหาประวัติ'; btn.disabled = false;
         }
 
         function toggleCurrencyDropdown() { document.getElementById("currencyOptions").classList.toggle("show"); }
@@ -319,445 +491,148 @@
             document.getElementById("selectedCurrencyContent").innerHTML = `<img src="${flagSrc}" alt="${currencyCode}"> ${text}`;
             document.getElementById("currencyOptions").classList.remove("show");
             currentCurrency = currencyCode;
-            
             const selectedBrand = document.getElementById('brandFilter').value;
             const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
             displayData(filteredData); generateRankingView(filteredData); updateCartUI(); 
-            
             if (currentStatusOrders.length > 0) { renderStatusTable(); }
         }
 
         async function fetchMatchaData() {
             try {
-                const cachedData = sessionStorage.getItem('matchaDataCacheV23');
-                if (cachedData) {
-                    allMatchaData = JSON.parse(cachedData);
-                    allMatchaData.forEach((item, index) => item.id = index);
-                    setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
-                } else {
-                    const response = await fetch(API_URL);
-                    allMatchaData = await response.json();
-                    allMatchaData.forEach((item, index) => item.id = index);
-                    sessionStorage.setItem('matchaDataCacheV23', JSON.stringify(allMatchaData));
-                    setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
-                }
-            } catch (error) { document.getElementById('matcha-container').innerHTML = '<p style="text-align:center; width:100%; color:red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>'; }
+                const response = await fetch(API_URL);
+                allMatchaData = await response.json();
+                allMatchaData.forEach((item, index) => item.id = index);
+                setupFilter(allMatchaData); displayData(allMatchaData); generateRankingView(allMatchaData); 
+            } catch (error) { document.getElementById('matcha-container').innerHTML = 'เกิดข้อผิดพลาดในการโหลดข้อมูล'; }
         }
 
         function switchTab(tabName) {
-            document.getElementById('view-shop').style.display = tabName === 'shop' ? 'block' : 'none';
-            document.getElementById('view-ranking').style.display = tabName === 'ranking' ? 'block' : 'none';
-            document.getElementById('view-status').style.display = tabName === 'status' ? 'block' : 'none';
-            document.getElementById('view-admin').style.display = tabName === 'admin' ? 'block' : 'none';
-            
-            document.getElementById('tab-shop').className = tabName === 'shop' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('tab-ranking').className = tabName === 'ranking' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('tab-status').className = tabName === 'status' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('tab-admin').className = tabName === 'admin' ? 'tab-btn active' : 'tab-btn';
-
+            ['shop','ranking','status','admin'].forEach(t => document.getElementById('view-'+t).style.display = 'none');
+            document.getElementById('view-'+tabName).style.display = 'block';
+            ['shop','ranking','status','admin'].forEach(t => document.getElementById('tab-'+t).className = 'tab-btn');
+            document.getElementById('tab-'+tabName).className = 'tab-btn active';
             document.getElementById('brand-filter-group').style.display = (tabName === 'status' || tabName === 'admin') ? 'none' : 'flex';
-
-            if (tabName === 'status' && lineProfile) {
-                checkStatus();
-            }
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById("toast");
-            toast.innerText = message; toast.className = "show";
-            setTimeout(function() { toast.className = toast.className.replace("show", ""); }, 2500);
-        }
-
-        function getDisplayPrice(item) {
-            if (currentCurrency === 'THB') { return item['Price_THB'] ? Number(item['Price_THB']).toLocaleString() + ' THB' : '-'; } 
-            else { return item['Price_JPY'] ? Number(item['Price_JPY']).toLocaleString() + ' JPY' : '-'; }
-        }
-
-        function generateRankingView(data) {
-            const container = document.getElementById('ranking-container');
-            let html = '';
-            const uniqueBrands = [...new Set(data.map(item => item['Brand']).filter(brand => brand))];
-
-            uniqueBrands.forEach(brand => {
-                let brandItems = data.filter(item => item['Brand'] === brand);
-                brandItems.sort((a, b) => (Number(b['Rating']) || 0) - (Number(a['Rating']) || 0));
-
-                html += `<h2 class="brand-header">🏠 ${brand} Guide</h2><div class="timeline-container">`;
-                brandItems.forEach((item, index) => {
-                    if(!item['Product Name']) return;
-                    const isLeft = index % 2 === 0; 
-                    const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w200` : 'https://via.placeholder.com/200?text=No+Image';
-                    const ratingValue = Number(item['Rating']) || 0;
-                    const detailText = item['Recommended2'] || item['Recommended'] || '';
-                    const priceText = getDisplayPrice(item); 
-
-                    const cardHtml = `<div class="ranking-card"><img src="${imageUrl}" loading="lazy"><div class="ranking-details"><h3>${item['Product Name']}</h3>${ratingValue > 0 ? `<div class="ranking-rating">⭐ ${ratingValue.toFixed(1)}</div>` : ''}<p style="margin: 0; font-size: 0.85em; color: #666; line-height: 1.4;">${detailText}</p><p style="margin: 5px 0 0 0; font-weight: bold; color: #b71c1c; font-size: 0.9em;">${priceText}</p></div></div>`;
-                    html += `<div class="timeline-row"><div class="timeline-left">${isLeft ? cardHtml : ''}</div><div class="timeline-center-dot"></div><div class="timeline-right">${!isLeft ? cardHtml : ''}</div></div>`;
-                });
-                html += `</div>`;
-            });
-            container.innerHTML = html;
+            if (tabName === 'status' && lineProfile) checkStatus();
         }
 
         function setupFilter(data) {
             const filterSelect = document.getElementById('brandFilter');
             filterSelect.innerHTML = '<option value="All">🍵 ทั้งหมด (All)</option>'; 
-            const uniqueBrands = [...new Set(allMatchaData.map(item => item['Brand']).filter(brand => brand))];
+            const uniqueBrands = [...new Set(data.map(item => item['Brand']).filter(brand => brand))];
             uniqueBrands.forEach(brand => {
                 const option = document.createElement('option');
                 option.value = brand; option.textContent = brand; filterSelect.appendChild(option);
             });
-            
-            const newFilterSelect = filterSelect.cloneNode(true);
-            filterSelect.parentNode.replaceChild(newFilterSelect, filterSelect);
-            newFilterSelect.addEventListener('change', function(e) {
-                const selectedBrand = e.target.value;
-                const filteredData = selectedBrand === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === selectedBrand);
-                displayData(filteredData); generateRankingView(filteredData); 
-            });
+            filterSelect.onchange = (e) => {
+                const val = e.target.value;
+                const filtered = val === 'All' ? allMatchaData : allMatchaData.filter(item => item['Brand'] === val);
+                displayData(filtered); generateRankingView(filtered);
+            };
         }
 
         function displayData(matchaList) {
             const container = document.getElementById('matcha-container');
-            if (matchaList.length === 0) { container.innerHTML = '<p style="text-align:center; width:100%;">ไม่พบข้อมูลมัทฉะ</p>'; return; }
             let html = '';
             matchaList.forEach(item => {
-                if(!item['Product Name']) return;
-                const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` : 'https://via.placeholder.com/300x200?text=No+Image';
-                const tasteHtml = item['Recommended2'] ? `<div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2']}</div>` : '';
-                const priceFormatted = getDisplayPrice(item); 
-                const statusStr = item['Status'] ? String(item['Status']).trim().toLowerCase() : '';
-                const isOutOfStock = statusStr === 'หมด' || statusStr === 'out of stock' || statusStr === 'sold out';
-                const cardStyle = isOutOfStock ? 'opacity: 0.7; filter: grayscale(40%);' : '';
-
-                let actionHtml = isOutOfStock 
-                    ? `<button class="add-btn out-of-stock-btn" disabled>❌ ของหมด</button>`
-                    : `<input type="number" id="qty-${item.id}" value="1" min="1" max="10" class="qty-input"><button onclick="addToCart(${item.id})" class="add-btn">➕ เพิ่มลงตะกร้า</button>`;
-
-                html += `<div class="card" style="${cardStyle}"><img src="${imageUrl}" loading="lazy"><h3>${item['Product Name']}</h3><p style="margin:0;"><strong>ร้าน:</strong> ${item['Brand']}</p><p style="margin:5px 0;"><strong>น้ำหนัก:</strong> ${item['Weight']}</p><span class="tag">${item['Recommended']}</span>${tasteHtml}<p class="price">ราคา: ${priceFormatted}</p><div class="add-row">${actionHtml}</div></div>`;
+                const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w400` : 'https://via.placeholder.com/300x220';
+                const price = currentCurrency === 'JPY' ? item['Price_JPY'] : item['Price_THB'];
+                const isOut = (item['Status'] || "").toLowerCase().includes("หมด");
+                html += `<div class="card" style="${isOut ? 'opacity:0.6; filter:grayscale(30%);' : ''}">
+                    <img src="${imageUrl}" loading="lazy">
+                    <h3>${item['Product Name']}</h3>
+                    <p><strong>ร้าน:</strong> ${item['Brand']}</p>
+                    <p><strong>น้ำหนัก:</strong> ${item['Weight']}</p>
+                    <span class="tag">${item['Recommended']}</span>
+                    <div class="taste-box"><strong>รสชาติ:</strong> ${item['Recommended2'] || '-'}</div>
+                    <p class="price">ราคา: ${Number(price).toLocaleString()} ${currentCurrency}</p>
+                    <div class="add-row">
+                        ${isOut ? '<button class="add-btn out-of-stock-btn" disabled>❌ ของหมด</button>' : 
+                        `<input type="number" id="qty-${item.id}" value="1" min="1" class="qty-input"><button onclick="addToCart(${item.id})" class="add-btn">➕ เพิ่มลงตะกร้า</button>`}
+                    </div></div>`;
             });
             container.innerHTML = html;
         }
 
         function addToCart(itemId) {
             const item = allMatchaData.find(m => m.id === itemId);
-            if (!item) return;
-            const qtyInput = document.getElementById(`qty-${itemId}`);
-            const qtyToAdd = parseInt(qtyInput.value) || 1;
-            
-            const priceJPY = Number(item['Price_JPY']) || 0; const priceTHB = Number(item['Price_THB']) || 0;
-            if (priceJPY === 0 && priceTHB === 0) { alert('สินค้านี้ยังไม่มีราคา ไม่สามารถคำนวณได้ครับ'); return; }
-            if (qtyToAdd > 10) { alert(`เพิ่มได้สูงสุด 10 ชิ้นต่อครั้งครับ`); qtyInput.value = 10; return; }
-
-            const imageUrl = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w100` : 'https://via.placeholder.com/100?text=No+Img';
-            const existingItem = cart.find(c => c.id === itemId);
-            
-            if (existingItem) {
-                if (existingItem.qty + qtyToAdd > 10) {
-                    alert(`เพิ่มได้อีกสูงสุดแค่ ${10 - existingItem.qty} ชิ้นครับ`);
-                    qtyInput.value = (10 - existingItem.qty) > 0 ? (10 - existingItem.qty) : 1; return;
-                }
-                existingItem.qty += qtyToAdd;
-            } else {
-                cart.push({ id: item.id, name: item['Product Name'], brand: item['Brand'], imageUrl: imageUrl, priceJPY: priceJPY, priceTHB: priceTHB, qty: qtyToAdd });
-            }
-            qtyInput.value = 1; updateCartUI(); showToast(`✅ เพิ่มลงตะกร้าแล้ว`);
+            const qty = parseInt(document.getElementById(`qty-${itemId}`).value) || 1;
+            const exist = cart.find(c => c.id === itemId);
+            const img = item['Image ID'] ? `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w100` : '';
+            if (exist) { 
+                if (exist.qty + qty > 10) { alert("เพิ่มได้สูงสุด 10 ชิ้นครับ"); return; }
+                exist.qty += qty; 
+            } 
+            else { cart.push({ id: itemId, name: item['Product Name'], brand: item['Brand'], priceJPY: item['Price_JPY'], priceTHB: item['Price_THB'], qty: qty, imageUrl: img }); }
+            updateCartUI(); showToast("✅ เพิ่มลงตะกร้าแล้ว");
         }
-
-        function removeFromCart(itemId) { cart = cart.filter(c => c.id !== itemId); updateCartUI(); }
 
         function updateCartUI() {
-            const cartSection = document.getElementById('cart-section');
-            const cartBody = document.getElementById('cart-body');
-            const cartTotal = document.getElementById('cart-total');
-
-            if (cart.length === 0) { cartSection.style.display = 'none'; return; }
-            cartSection.style.display = 'block';
-            
-            let html = ''; let grandTotalJPY = 0; let grandTotalTHB = 0;
-            cart.forEach(item => {
-                const subTTHB = item.priceTHB * item.qty; const subTJPY = item.priceJPY * item.qty;
-                grandTotalJPY += subTJPY; grandTotalTHB += subTTHB;
-                const dPrice = currentCurrency === 'THB' ? item.priceTHB : item.priceJPY;
-                const dSub = currentCurrency === 'THB' ? subTTHB : subTJPY;
-                html += `<tr><td><div class="cart-item-info"><img src="${item.imageUrl}" class="cart-img"><div><strong>${item.name}</strong><br><span style="font-size:0.8em;">🏠 ${item.brand}</span></div></div></td><td style="text-align:center;">${dPrice.toLocaleString()}</td><td style="text-align:center;">${item.qty}</td><td style="text-align:right; font-weight:bold;">${dSub.toLocaleString()} ${currentCurrency}</td><td style="text-align:center;"><button class="remove-btn" onclick="removeFromCart(${item.id})">ลบ</button></td></tr>`;
+            const box = document.getElementById('cart-section');
+            const tbody = document.getElementById('cart-body');
+            if (cart.length === 0) { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            let html = ''; let total = 0;
+            cart.forEach((item, i) => {
+                const p = currentCurrency === 'THB' ? item.priceTHB : item.priceJPY;
+                const sub = p * item.qty; total += sub;
+                html += `<tr><td><div class="cart-item-info"><img src="${item.imageUrl}" class="cart-img"><div><strong>${item.name}</strong><br><small>${item.brand}</small></div></div></td><td style="text-align:center;">${Number(p).toLocaleString()}</td><td style="text-align:center;">${item.qty}</td><td style="text-align:right;">${sub.toLocaleString()}</td><td style="text-align:center;"><button class="remove-btn" onclick="cart.splice(${i},1);updateCartUI();">ลบ</button></td></tr>`;
             });
-            cartBody.innerHTML = html;
-            const finalDisplay = currentCurrency === 'THB' ? grandTotalTHB : grandTotalJPY;
-            cartTotal.innerHTML = `ยอดรวมสุทธิ: ${finalDisplay.toLocaleString()} ${currentCurrency}`;
+            tbody.innerHTML = html;
+            const finalTotal = total;
+            document.getElementById('cart-total').innerText = `ยอดรวมสุทธิ: ${finalTotal.toLocaleString()} ${currentCurrency}`;
         }
 
-        function sendOrderEmail() {
-            if (cart.length === 0) return;
+        async function sendOrderEmail() {
             const cusName = document.getElementById('customer-name').value.trim();
-            if (!cusName) { alert("กรุณากรอกชื่อผู้สั่งก่อนครับ"); document.getElementById('customer-name').focus(); return; }
-
-            const d = new Date();
-            const orderId = `ORD-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${Math.floor(1000+Math.random()*9000)}`;
-
-            let gtJPY = 0; let gtTHB = 0;
-            cart.forEach(item => { gtJPY += item.priceJPY * item.qty; gtTHB += item.priceTHB * item.qty; });
-
-            const lineUid = lineProfile ? lineProfile.userId : "";
-
-            const orderData = { 
-                customerName: cusName, 
-                orderId: orderId, 
-                lineUserId: lineUid,
-                cart: cart, 
-                totalJPY: gtJPY, 
-                totalTHB: gtTHB 
-            };
-            
+            if (!cusName) { alert("กรุณากรอกชื่อผู้สั่งครับ"); return; }
             const btn = document.getElementById('checkout-btn');
-            btn.innerText = "⏳ กำลังส่งข้อมูล..."; btn.style.backgroundColor = "#9e9e9e"; btn.disabled = true;
-
-            fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(orderData) })
-            .then(() => {
-                alert(`🎉 สั่งซื้อสำเร็จ!\nชื่อ: ${cusName}\nเลขออเดอร์: ${orderId}\n*กรุณาแคปหน้าจอเก็บไว้เช็คสถานะนะครับ`);
-                cart = []; 
-                document.getElementById('customer-name').value = lineProfile ? lineProfile.displayName : ""; 
-                updateCartUI();
-                btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.style.backgroundColor = "#f57f17"; btn.disabled = false;
-            }).catch(() => {
-                alert("เกิดข้อผิดพลาดในการส่ง");
-                btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.style.backgroundColor = "#f57f17"; btn.disabled = false;
-            });
-        }
-
-        // --- ส่วนของลูกค้า (เช็คสถานะ) ---
-        async function checkStatus() {
-            const nameInput = document.getElementById('search-order-name').value.trim();
-            const lineUid = lineProfile ? lineProfile.userId : "";
+            btn.innerText = "⏳ กำลังส่งข้อมูล..."; btn.disabled = true;
             
-            if (!nameInput && !lineUid) { 
-                alert('กรุณากรอกชื่อผู้สั่ง หรือ ล็อกอิน LINE ก่อนครับ'); 
-                return; 
-            }
+            const orderId = 'ORD-' + Date.now().toString().slice(-6);
+            let tJPY = 0; let tTHB = 0;
+            cart.forEach(c => { tJPY += c.priceJPY * c.qty; tTHB += c.priceTHB * c.qty; });
             
-            const btn = document.getElementById('search-btn'); const table = document.getElementById('status-table'); const msg = document.getElementById('status-msg');
-            btn.innerText = '⏳ กำลังอัปเดตข้อมูล...'; btn.disabled = true; table.style.display = 'none'; msg.style.display = 'none';
-
+            const payload = { customerName: cusName, orderId, lineUserId: lineProfile ? lineProfile.userId : "", totalJPY: tJPY, totalTHB: tTHB, cart };
+            
             try {
-                const url = `${API_URL}?action=checkStatus&name=${encodeURIComponent(nameInput)}&uid=${encodeURIComponent(lineUid)}`;
-                const res = await fetch(url);
-                currentStatusOrders = await res.json(); 
-                
-                if (currentStatusOrders.length === 0) { 
-                    msg.innerText = `❌ ไม่พบประวัติการสั่งซื้อครับ (ลองค้นหาด้วยรหัส Order ID)`; 
-                    msg.style.display = 'block'; 
-                } else { 
-                    renderStatusTable(); 
-                }
-            } catch (error) { 
-                msg.innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล'; 
-                msg.style.display = 'block'; 
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                alert("🎉 สั่งซื้อสำเร็จ! เลขออเดอร์: " + orderId);
+                cart = []; updateCartUI();
+                btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.disabled = false;
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+                btn.innerText = "✅ ยืนยันรายการ & ส่งออเดอร์"; btn.disabled = false;
             }
-            btn.innerText = 'ค้นหาประวัติ'; btn.disabled = false;
         }
 
-        // 🌟 อัปเกรดฟังก์ชันจัดกลุ่มตารางแสดงผล
-        function renderStatusTable() {
-            const table = document.getElementById('status-table');
-            const tbody = document.getElementById('status-body');
-            let html = '';
-            
-            // จัดกลุ่มออเดอร์ตาม Order ID
-            const groupedOrders = {};
-            const orderKeys = []; 
-            
-            currentStatusOrders.forEach(order => {
-                const key = (order.orderId && order.orderId !== "-") ? order.orderId : "ไม่มีเลขที่ออเดอร์";
-                if(!groupedOrders[key]) {
-                    groupedOrders[key] = [];
-                    orderKeys.push(key);
-                }
-                groupedOrders[key].push(order);
-            });
-
-            let colorToggle = false;
-            let grandTotalAll = 0;
-
-            orderKeys.forEach(orderId => {
-                const items = groupedOrders[orderId];
-                let orderTotal = 0;
-                let orderDate = items[0].date;
-                
-                // สลับสีพื้นหลัง
-                const blockBgColor = colorToggle ? "#ffffff" : "#f4f8f4"; 
-                colorToggle = !colorToggle;
-
-                // หัวตารางของแต่ละออเดอร์
-                html += `
-                    <tr style="background-color: #2e5c23; color: white;">
-                        <td colspan="6" style="padding: 12px 15px; font-size: 1.05em; border-radius: 4px 4px 0 0;">
-                            <strong>🏷️ เลขออเดอร์: ${orderId}</strong> &nbsp;|&nbsp; 📅 วันที่สั่ง: ${orderDate}
-                        </td>
-                    </tr>
-                `;
-
-                // รายการสินค้าในออเดอร์นั้น
-                items.forEach(order => {
-                    let sColor = '#f57f17'; let isOut = false;
-                    if(order.status.includes('หมด') || order.status.includes('ไม่ได้') || order.status.includes('ขาด')){ sColor = '#e53935'; isOut = true; }
-                    if(order.status.includes('ได้') || order.status.includes('จัดส่ง') || order.status.includes('ครบ')){ sColor = '#2e7d32'; }
-
-                    const pUnit = currentCurrency === 'THB' ? order.priceTHB : order.priceJPY;
-                    const pTotal = currentCurrency === 'THB' ? order.subTotalTHB : order.subTotalJPY;
-                    
-                    if (!isOut) { 
-                        orderTotal += Number(pTotal); 
-                        grandTotalAll += Number(pTotal);
-                    }
-
-                    let fImg = order.imageUrl;
-                    if (fImg && fImg.includes("drive.google.com")) {
-                        const idM = fImg.match(/id=([^&]+)/); if (idM) { fImg = `https://drive.google.com/thumbnail?id=${idM[1]}&sz=w100`; }
-                    }
-                    const dStyle = isOut ? "text-decoration: line-through; color: #aaa;" : "color: #b71c1c; font-weight: bold;";
-                    const rStyle = isOut ? `background-color: ${blockBgColor}; opacity: 0.6;` : `background-color: ${blockBgColor};`;
-
-                    html += `
-                        <tr style="${rStyle}; border-bottom: 1px solid #e0e0e0;">
-                            <td style="text-align:center; color:#999; font-size: 1.5em;">↳</td>
-                            <td>
-                                <div style="display:flex; align-items:center; gap:12px;">
-                                    <img src="${fImg}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #ddd;">
-                                    <div><strong style="color:#333;">${order.itemName}</strong><br><span style="font-size:0.8em; color:#777;">🏠 ${order.brand}</span></div>
-                                </div>
-                            </td>
-                            <td style="text-align:center;">${Number(pUnit).toLocaleString()}</td>
-                            <td style="text-align:center;">${order.qty}</td>
-                            <td style="text-align:right; ${dStyle}">${Number(pTotal).toLocaleString()}</td>
-                            <td style="text-align:center;"><span class="status-badge" style="background-color: ${sColor};">${order.status}</span></td>
-                        </tr>
-                    `;
-                });
-
-                // สรุปยอดของออเดอร์นั้น
-                html += `
-                    <tr style="background-color: ${blockBgColor}; border-bottom: 5px solid #ccc;">
-                        <td colspan="4" style="text-align:right; font-weight:bold; color:#2e5c23; padding:10px 15px;">ยอดรวมออเดอร์นี้:</td>
-                        <td colspan="2" style="text-align:left; font-weight:bold; font-size:1.1em; color:#b71c1c; padding:10px 15px;">${orderTotal.toLocaleString()} ${currentCurrency}</td>
-                    </tr>
-                `;
-            });
-
-            // 🌟 ถ้ายอดสั่งซื้อมีมากกว่า 1 ออเดอร์ ให้โชว์ยอดรวมทั้งหมดให้ด้วย
-            if(orderKeys.length > 1) {
-                html += `
-                    <tr style="background-color: #fff3e0; border-top: 2px solid #f57f17;">
-                        <td colspan="4" style="text-align:right; font-weight:bold; color:#e65100; padding:15px; font-size: 1.1em;">🔥 ยอดรวมที่หาได้ (ทุกออเดอร์):</td>
-                        <td colspan="2" style="text-align:left; font-weight:bold; font-size:1.3em; color:#b71c1c; padding:15px;">${grandTotalAll.toLocaleString()} ${currentCurrency}</td>
-                    </tr>
-                `;
-            }
-
-            tbody.innerHTML = html; 
-            table.style.display = 'table';
-        }
-
-        // ==========================================
-        // 🌟 ส่วนของ แอดมิน (จัดการออเดอร์)
-        // ==========================================
         function loginAdmin() {
-            const pass = document.getElementById('admin-pass').value;
-            if(pass === '1234') {
+            if (document.getElementById('admin-pass').value === '0640425461') {
                 document.getElementById('admin-login-box').style.display = 'none';
                 document.getElementById('admin-dashboard').style.display = 'block';
                 fetchAdminData();
-            } else { alert('รหัสผ่านไม่ถูกต้องครับ'); }
+            } else { alert("รหัสผ่านไม่ถูกต้อง"); }
         }
 
-        function setStatusText(rowId, text) { document.getElementById(`admin-status-${rowId}`).value = text; }
-
-        async function fetchAdminData() {
-    const tbody = document.getElementById('admin-tbody');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">⏳ กำลังโหลดข้อมูล...</td></tr>';
-    try {
-        const response = await fetch(`${API_URL}?action=adminFetch`);
-        const data = await response.json();
-        
-        // จัดกลุ่มตาม Order ID
-        const grouped = data.reduce((acc, item) => {
-            if (!acc[item.orderId]) acc[item.orderId] = [];
-            acc[item.orderId].push(item);
-            return acc;
-        }, {});
-
-        let html = '';
-        for (const orderId in grouped) {
-            const items = grouped[orderId];
-            const firstItem = items[0];
-            
-            // สร้างหัวข้อกลุ่ม (Order ID) และปุ่มส่ง LINE รวม
-            html += `<tr style="background-color: #f0f4f0; font-weight: bold; border-left: 5px solid #2e7d32;">
-                        <td colspan="3" style="padding: 12px;">
-                            📦 <b>Order ID: ${orderId}</b><br>
-                            <small>👤 ${firstItem.name} | 📅 ${firstItem.date}</small>
-                        </td>
-                        <td colspan="1" style="text-align: right; padding: 12px;">
-                            <button onclick="sendGroupLineUpdate('${orderId}')" style="background-color: #00b900; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;">
-                                📲 ส่ง LINE อัปเดต
-                            </button>
-                        </td>
-                     </tr>`;
-
-            items.forEach(item => {
-                html += `<tr>
-                    <td style="padding-left: 20px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <img src="${item.imageUrl}" style="width:35px; height:35px; border-radius:4px;">
-                            <span>${item.itemName}</span>
-                        </div>
-                    </td>
-                    <td><input type="number" id="admin-qty-${item.row}" value="${item.qty}" style="width: 45px; text-align:center;"></td>
-                    <td>
-                        <select id="admin-status-${item.row}">
-                            <option value="⏳ กำลังตามหา" ${item.status === '⏳ กำลังตามหา' ? 'selected' : ''}>⏳ กำลังตามหา</option>
-                            <option value="✅ ได้ของแล้ว" ${item.status === '✅ ได้ของแล้ว' ? 'selected' : ''}>✅ ได้ของแล้ว</option>
-                            <option value="❌ ของหมด" ${item.status === '❌ ของหมด' ? 'selected' : ''}>❌ ของหมด</option>
-                        </select>
-                    </td>
-                    <td><button id="btn-save-${item.row}" onclick="saveAdminRow(${item.row})" style="background-color: #1565c0; color: white; border: none; padding: 6px 10px; border-radius: 4px;">💾 บันทึก</button></td>
-                </tr>`;
+        function generateRankingView(data) {
+            const container = document.getElementById('ranking-container');
+            let html = '';
+            const brands = [...new Set(data.map(item => item['Brand']).filter(b => b))];
+            brands.forEach(brand => {
+                const items = data.filter(item => item['Brand'] === brand).sort((a,b) => (b.Rating||0) - (a.Rating||0));
+                html += `<h2 class="brand-header">🏠 ${brand} Guide</h2><div class="timeline-container">`;
+                items.forEach((item, index) => {
+                    const isLeft = index % 2 === 0;
+                    const img = `https://drive.google.com/thumbnail?id=${item['Image ID']}&sz=w200`;
+                    const card = `<div class="ranking-card"><img src="${img}" loading="lazy"><div><h3>${item['Product Name']}</h3>${item.Rating?`<div class="ranking-rating">⭐ ${item.Rating}</div>`:''}<p style="font-size:0.85em; line-height:1.3;">${item.Recommended2 || ''}</p></div></div>`;
+                    html += `<div class="timeline-row"><div class="timeline-left">${isLeft?card:''}</div><div class="timeline-center-dot"></div><div class="timeline-right">${!isLeft?card:''}</div></div>`;
+                });
+                html += '</div>';
             });
-        }
-        tbody.innerHTML = html;
-    } catch(e) { console.error(e); }
-}
-
-// เพิ่มฟังก์ชันใหม่สำหรับปุ่มเขียว
-async function sendGroupLineUpdate(orderId) {
-    if(!confirm("ส่ง LINE อัปเดตสถานะให้ลูกค้าใช่ไหม?")) return;
-    showToast("กำลังส่ง...");
-    await fetch(API_URL, {
-        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'sendGroupLineUpdate', orderId: orderId })
-    });
-    showToast("ส่งสำเร็จ! ✅");
-}
-
-        function saveAdminRow(row) {
-            const newQty = document.getElementById(`admin-qty-${row}`).value;
-            const newStatus = document.getElementById(`admin-status-${row}`).value;
-            const btn = document.getElementById(`btn-save-${row}`);
-            
-            btn.innerText = "⏳..."; btn.disabled = true; btn.style.backgroundColor = "#9e9e9e";
-
-            const payload = { action: 'updateStatusAdmin', row: row, qty: newQty, status: newStatus };
-
-            fetch(API_URL, {
-                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
-            }).then(() => {
-                btn.innerText = "✅ เสร็จ"; btn.style.backgroundColor = "#2e7d32"; showToast("บันทึกข้อมูลเรียบร้อย!");
-                setTimeout(() => { btn.innerText = "💾 บันทึก"; btn.style.backgroundColor = "#1565c0"; btn.disabled = false; }, 2000);
-            }).catch(() => {
-                alert("บันทึกไม่สำเร็จ ลองอีกครั้ง"); btn.innerText = "💾 บันทึก"; btn.style.backgroundColor = "#1565c0"; btn.disabled = false;
-            });
+            container.innerHTML = html;
         }
 
-        // 🌟 เรียกใช้ระบบ
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = 'show'; setTimeout(()=>t.className='', 2500); }
+
         initializeApp();
     </script>
 </body>
