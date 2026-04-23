@@ -741,7 +741,7 @@ body::after {
             </div>
         </div>
         <div class="notice-footer">
-            <button class="notice-btn" onclick="closeNotice()">รับทราบแล้วครับ ✓</button>
+            <button class="notice-btn" onclick="closeNotice()">รับทราบ ✓</button>
         </div>
     </div>
 </div>
@@ -1202,7 +1202,7 @@ function saveAdminRow(r){
     const btn=document.getElementById(`btn-save-${r}`);
     btn.textContent="⏳...";btn.disabled=true;btn.style.opacity='.6';
     fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'updateStatusAdmin',row:r,qty,status})})
-    .then(()=>{btn.textContent="✅";btn.style.opacity='1';btn.style.background="var(--matcha-d)";showToast('💾 บันทึกแล้วครับ');setTimeout(()=>{btn.textContent="💾 บันทึก";btn.style.background="var(--navy)";btn.disabled=false;},2000);})
+    .then(()=>{btn.textContent="✅";btn.style.opacity='1';btn.style.background="var(--matcha-d)";showToast('💾 บันทึกแล้ว');setTimeout(()=>{btn.textContent="💾 บันทึก";btn.style.background="var(--navy)";btn.disabled=false;},2000);})
     .catch(()=>{alert("บันทึกไม่สำเร็จ");btn.textContent="💾 บันทึก";btn.style.opacity='1';btn.disabled=false;});
 }
 
