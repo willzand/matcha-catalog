@@ -750,29 +750,65 @@ function renderStatusTbl(){
 }
 
 /* ── admin ── */
+// ── Session Timeout 30 นาที ──
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 นาที
+let sessionTimer = null;
+
+function startSessionTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(() => {
+    // logout อัตโนมัติ
+    document.getElementById('adm-dash').style.display = 'none';
+    document.getElementById('adm-login').style.display = 'block';
+    document.getElementById('adm-pass').value = '';
+    alert('หมดเวลา Session กรุณา Login ใหม่ครับ');
+  }, SESSION_TIMEOUT);
+}
+
+function resetSessionTimer() {
+  if (document.getElementById('adm-dash').style.display !== 'none') {
+    startSessionTimer();
+  }
+}
+
+// reset timer ทุกครั้งที่มีการใช้งาน
+document.addEventListener('click', resetSessionTimer);
+document.addEventListener('keypress', resetSessionTimer);
+
+// ── Admin Login พร้อม Rate Limit ──
 async function loginAdmin() {
   const pass = document.getElementById('adm-pass').value;
   if (!pass) return;
+
+  const btn = document.querySelector('#adm-login .sb-btn');
+  btn.textContent = '⏳ กำลังตรวจสอบ...';
+  btn.disabled = true;
+
   try {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'adminLogin',
-        password: pass
-      })
+      body: JSON.stringify({ action: 'adminLogin', password: pass })
     });
     const result = await res.json();
+
     if (result.success) {
       document.getElementById('adm-login').style.display = 'none';
       document.getElementById('adm-dash').style.display = 'block';
       loadAdmin();
+      startSessionTimer(); // เริ่มนับ session
+    } else if (result.locked) {
+      alert(`🔒 Login ถูกล็อค\nลองใหม่ได้ในอีก ${result.waitMin} นาทีครับ`);
     } else {
-      alert('รหัสผ่านไม่ถูกต้องครับ');
+      const left = result.remaining;
+      alert(`รหัสผ่านไม่ถูกต้องครับ\nเหลืออีก ${left} ครั้ง ก่อนถูกล็อค 15 นาที`);
     }
   } catch(e) {
     alert('เกิดข้อผิดพลาด ลองใหม่ครับ');
   }
+
+  btn.textContent = 'เข้าสู่ระบบ';
+  btn.disabled = false;
 }
 
 
