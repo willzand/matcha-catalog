@@ -750,13 +750,33 @@ function renderStatusTbl(){
 }
 
 /* ── admin ── */
-function loginAdmin(){
-  if(document.getElementById('adm-pass').value==='1111'){
-    document.getElementById('adm-login').style.display='none';
-    document.getElementById('adm-dash').style.display='block';
-    loadAdmin();
-  }else alert('รหัสผ่านไม่ถูกต้องครับ 😅');
+async function loginAdmin() {
+  const pass = document.getElementById('adm-pass').value;
+  if (!pass) return;
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'adminLogin',
+        password: pass
+      })
+    });
+    const result = await res.json();
+    if (result.success) {
+      document.getElementById('adm-login').style.display = 'none';
+      document.getElementById('adm-dash').style.display = 'block';
+      loadAdmin();
+    } else {
+      alert('รหัสผ่านไม่ถูกต้องครับ');
+    }
+  } catch(e) {
+    alert('เกิดข้อผิดพลาด ลองใหม่ครับ');
+  }
 }
+
+
+  
 function setSt(r,t){document.getElementById(`as-${r}`).value=t;}
 async function loadAdmin(){
   const body=document.getElementById('adm-body');
