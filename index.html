@@ -800,7 +800,7 @@ async function loginAdmin() {
     } else if (result.locked) {
       alert(`🔒 Login ถูกล็อค\nลองใหม่ได้ในอีก ${result.waitMin} นาทีครับ`);
     } else {
-      const left = result.remaining;
+     const left = result.remaining ?? '?';
       alert(`รหัสผ่านไม่ถูกต้องครับ\nเหลืออีก ${left} ครั้ง ก่อนถูกล็อค 15 นาที`);
     }
   } catch(e) {
