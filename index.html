@@ -523,6 +523,17 @@ async function initApp(){
       document.getElementById('profile-name').innerText=profile.displayName;
       document.getElementById('cust-name').value=profile.displayName;
     }else document.getElementById('liff-login-btn').style.display='inline-block';
+
+ fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action: 'logVisitor',
+      name: profile.displayName,
+      userId: profile.userId
+    })
+
+    
   }catch(e){console.error(e)}
   fetchData();
 }
