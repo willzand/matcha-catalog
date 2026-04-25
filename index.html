@@ -573,6 +573,18 @@ function setAdminToken(t){
   else sessionStorage.removeItem('adminToken');
 }
 
+// ── Always get a FRESH LINE id_token (it expires after ~1hr) ──
+// Returns '' if not logged in or if SDK not ready.
+function freshIdToken(){
+  try{
+    if(window.liff && liff.isLoggedIn && liff.isLoggedIn()){
+      var t = liff.getIDToken();
+      return t || '';
+    }
+  }catch(_){}
+  return '';
+}
+
 /* ── popup ── */
 function closePopup(){const e=document.getElementById('popup-ov');e.style.transition='opacity .28s';e.style.opacity='0';setTimeout(()=>e.remove(),300)}
 
@@ -768,7 +780,7 @@ async function sendOrder(){
     action:'submitOrder',
     customerName:name,
     cart:cartPayload,
-    idToken: idToken || ''  // server verifies
+    idToken: freshIdToken()  // fresh token (expires after ~1hr)
   };
 
   try{
@@ -799,8 +811,11 @@ async function checkStatus(){
   const tbl=document.getElementById('status-tbl');
   const msg=document.getElementById('status-msg');
 
-  // Need either LIFF login (idToken) or both name AND orderId
-  if(!idToken && !(name && oid)){
+  // Get fresh id_token (expires after ~1hr — must refresh on every call)
+  const tok = freshIdToken();
+
+  // Need either LIFF login (token) or both name AND orderId
+  if(!tok && !(name && oid)){
     alert('กรุณา Login LINE หรือกรอกทั้ง "ชื่อ" และ "เลขออเดอร์" ครับ');
     return;
   }
@@ -808,7 +823,7 @@ async function checkStatus(){
   btn.textContent='⏳ กำลังค้นหา...';btn.disabled=true;tbl.style.display='none';msg.style.display='none';
   try{
     const params = new URLSearchParams({action:'checkStatus'});
-    if(idToken) params.set('idToken', idToken);
+    if(tok) params.set('idToken', tok);
     if(name) params.set('name', name);
     if(oid) params.set('orderId', oid);
     const r=await fetch(`${API}?${params.toString()}`);
