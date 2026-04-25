@@ -516,26 +516,13 @@ function closePopup(){const e=document.getElementById('popup-ov');e.style.transi
 async function initApp(){
   try{
     await liff.init({liffId:LIFF_ID});
-    if (liff.isLoggedIn()) {
-  profile = await liff.getProfile();
-  document.getElementById('profile-info').style.display = 'flex';
-  document.getElementById('profile-img').src = profile.pictureUrl;
-  document.getElementById('profile-name').innerText = profile.displayName;
-  document.getElementById('cust-name').value = profile.displayName;
-
-  // ✅ เพิ่มบรรทัดนี้ — log visitor
-  fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({
-      action: 'logVisitor',
-      name: profile.displayName,
-      userId: profile.userId
-    })
-  }).catch(() => {}); // ถ้า log ไม่ได้ก็ไม่เป็นไร ไม่ขึ้น error
-}
-
-    
+    if(liff.isLoggedIn()){
+      profile=await liff.getProfile();
+      document.getElementById('profile-info').style.display='flex';
+      document.getElementById('profile-img').src=profile.pictureUrl;
+      document.getElementById('profile-name').innerText=profile.displayName;
+      document.getElementById('cust-name').value=profile.displayName;
+    }else document.getElementById('liff-login-btn').style.display='inline-block';
   }catch(e){console.error(e)}
   fetchData();
 }
