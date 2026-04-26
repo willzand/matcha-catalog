@@ -596,8 +596,38 @@ function logoutLine(){
   }catch(_){}
   // Clear any session flags
   sessionStorage.removeItem('autoReloginAfter');
+  sessionStorage.removeItem('autoReloginCart');
+  sessionStorage.removeItem('autoReloginName');
   sessionStorage.removeItem('matchaDataCacheV24');
   location.reload();
+}
+
+// ── Check if current id_token is still valid (verify with LINE API directly) ──
+// Returns: 'valid' | 'expired' | 'no_token' | 'error'
+async function checkTokenValid(){
+  const tok = freshIdToken();
+  if(!tok) return 'no_token';
+  try{
+    const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `id_token=${encodeURIComponent(tok)}&client_id=${LIFF_ID.split('-')[0]}`
+    });
+    if(res.ok) return 'valid';
+    const j = await res.json().catch(()=>({}));
+    if(j.error_description && /expired/i.test(j.error_description)) return 'expired';
+    return 'error';
+  }catch(_){ return 'error'; }
+}
+
+// ── Trigger silent re-login that resumes a pending action afterwards ──
+function silentRelogin(action, extraData){
+  sessionStorage.setItem('autoReloginAfter', action);
+  if(extraData) {
+    for(const k in extraData) sessionStorage.setItem('autoRelogin_'+k, JSON.stringify(extraData[k]));
+  }
+  try{ liff.logout(); }catch(_){}
+  try{ liff.login(); }catch(_){ location.reload(); }
 }
 
 /* ── popup ── */
@@ -620,8 +650,26 @@ async function initApp(){
       if(resumeAction){
         sessionStorage.removeItem('autoReloginAfter');
         if(resumeAction === 'checkStatus'){
-          // Switch to status tab and re-run check
           setTimeout(()=>{ go('status'); checkStatus(); }, 100);
+        } else if(resumeAction === 'sendOrder'){
+          // Restore cart and customer name from session
+          try{
+            const savedCart = JSON.parse(sessionStorage.getItem('autoRelogin_cart') || '[]');
+            const savedName = JSON.parse(sessionStorage.getItem('autoRelogin_name') || '""');
+            sessionStorage.removeItem('autoRelogin_cart');
+            sessionStorage.removeItem('autoRelogin_name');
+            if(savedCart.length){
+              cart = savedCart;
+              renderCart();
+              if(savedName) document.getElementById('cust-name').value = savedName;
+              // Auto-trigger sendOrder after a brief delay to ensure UI is ready
+              setTimeout(()=>{
+                if(confirm('🍵 Login ใหม่สำเร็จ!\nต้องการส่งออเดอร์ที่ค้างไว้ต่อหรือไม่ครับ?')){
+                  sendOrder();
+                }
+              }, 500);
+            }
+          }catch(_){}
         }
       }
     }else document.getElementById('liff-login-btn').style.display='inline-block';
@@ -797,7 +845,21 @@ async function sendOrder(){
   const name=document.getElementById('cust-name').value.trim();
   if(!name){alert('กรุณากรอกชื่อก่อนครับ');document.getElementById('cust-name').focus();return;}
   const btn=document.getElementById('checkout-btn');
-  btn.textContent='⏳ กำลังส่ง...';btn.style.background='#9e9e9e';btn.disabled=true;
+  btn.textContent='⏳ กำลังตรวจสอบ...';btn.style.background='#9e9e9e';btn.disabled=true;
+
+  // If logged into LINE, verify token before placing order — re-login if expired
+  if(liff && liff.isLoggedIn && liff.isLoggedIn()){
+    const tokStatus = await checkTokenValid();
+    if(tokStatus === 'expired'){
+      btn.textContent='🔄 Login ใหม่...';
+      // Save cart + name so we can resume after re-login
+      silentRelogin('sendOrder', {cart: cart, name: name});
+      return;  // page will redirect to LINE login
+    }
+    // 'valid' or 'error' → proceed (server will reject if truly invalid)
+  }
+
+  btn.textContent='⏳ กำลังส่ง...';
 
   // Send only what server needs to identify items; let server validate prices
   const cartPayload = cart.map(c=>({name:c.name, brand:c.brand, qty:c.qty}));
@@ -805,7 +867,7 @@ async function sendOrder(){
     action:'submitOrder',
     customerName:name,
     cart:cartPayload,
-    idToken: freshIdToken()  // fresh token (expires after ~1hr)
+    idToken: freshIdToken()
   };
 
   try{
@@ -857,10 +919,7 @@ async function checkStatus(){
       // If logged in to LINE but token rejected → token expired, auto re-login
       if(data.error === 'auth_required' && tok && liff && liff.isLoggedIn()){
         msg.textContent='🔄 Token หมดอายุ กำลัง login ใหม่...';msg.style.display='block';
-        // Set flag so post-login flow can resume
-        sessionStorage.setItem('autoReloginAfter', 'checkStatus');
-        try{ liff.logout(); }catch(_){}
-        try{ liff.login(); }catch(_){ location.reload(); }
+        silentRelogin('checkStatus');
         return;
       }
       msg.textContent='⚠️ ต้องล็อกอิน LINE หรือกรอกชื่อ+เลขออเดอร์';msg.style.display='block';
