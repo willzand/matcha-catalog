@@ -599,6 +599,16 @@ async function initApp(){
       document.getElementById('profile-img').src=profile.pictureUrl;
       document.getElementById('profile-name').innerText=profile.displayName;
       document.getElementById('cust-name').value=profile.displayName;
+
+      // If we just came back from an auto re-login, resume the action that triggered it
+      const resumeAction = sessionStorage.getItem('autoReloginAfter');
+      if(resumeAction){
+        sessionStorage.removeItem('autoReloginAfter');
+        if(resumeAction === 'checkStatus'){
+          // Switch to status tab and re-run check
+          setTimeout(()=>{ go('status'); checkStatus(); }, 100);
+        }
+      }
     }else document.getElementById('liff-login-btn').style.display='inline-block';
   }catch(e){console.error(e)}
   fetchData();
@@ -829,6 +839,15 @@ async function checkStatus(){
     const r=await fetch(`${API}?${params.toString()}`);
     const data = await r.json();
     if(data.error){
+      // If logged in to LINE but token rejected → token expired, auto re-login
+      if(data.error === 'auth_required' && tok && liff && liff.isLoggedIn()){
+        msg.textContent='🔄 Token หมดอายุ กำลัง login ใหม่...';msg.style.display='block';
+        // Set flag so post-login flow can resume
+        sessionStorage.setItem('autoReloginAfter', 'checkStatus');
+        try{ liff.logout(); }catch(_){}
+        try{ liff.login(); }catch(_){ location.reload(); }
+        return;
+      }
       msg.textContent='⚠️ ต้องล็อกอิน LINE หรือกรอกชื่อ+เลขออเดอร์';msg.style.display='block';
       statusOrders=[];
     } else {
