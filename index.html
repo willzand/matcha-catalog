@@ -109,6 +109,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 #profile-img{width:30px;height:30px;border-radius:50%;border:2px solid var(--g1);object-fit:cover}
 #profile-name{font-weight:800;color:var(--g2);font-size:.88em}
+#logout-btn{background:transparent;border:1.5px solid var(--yw2);color:var(--yw2);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.95em;padding:0;margin-left:6px;transition:.15s;display:inline-flex;align-items:center;justify-content:center}
+#logout-btn:hover{background:var(--yw2);color:#fff;transform:scale(1.1)}
 #liff-login-btn{display:none;background:var(--line);color:#fff;border:none;border-bottom:3px solid #028a38;padding:9px 19px;border-radius:var(--r);font-family:'Noto Sans Thai',sans-serif;font-weight:800;font-size:.87em;cursor:pointer;transition:all .15s;box-shadow:0 4px 12px rgba(6,199,85,.28)}
 #liff-login-btn:hover{transform:translateY(-2px)}
 #liff-login-btn:active{transform:translateY(1px);border-bottom-width:1px}
@@ -391,6 +393,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <div id="profile-info">
       <img id="profile-img" src="" alt="">
       <span>สวัสดีคุณ <strong id="profile-name" style="color:var(--g2)"></strong> 💚</span>
+      <button id="logout-btn" onclick="logoutLine()" title="ออกจากระบบ LINE">🚪</button>
     </div>
     <button id="liff-login-btn" onclick="liff.login()">🟢 เข้าสู่ระบบด้วย LINE</button>
   </div>
@@ -583,6 +586,18 @@ function freshIdToken(){
     }
   }catch(_){}
   return '';
+}
+
+// ── Logout from LINE — clears LIFF session and reloads ──
+function logoutLine(){
+  if(!confirm('ต้องการออกจากระบบ LINE ใช่หรือไม่ครับ?')) return;
+  try{
+    if(window.liff && liff.isLoggedIn && liff.isLoggedIn()) liff.logout();
+  }catch(_){}
+  // Clear any session flags
+  sessionStorage.removeItem('autoReloginAfter');
+  sessionStorage.removeItem('matchaDataCacheV24');
+  location.reload();
 }
 
 /* ── popup ── */
